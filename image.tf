@@ -1,4 +1,4 @@
-resource "proxmox_virtual_environment_download_file" "debian-cloud" {
+resource "proxmox_download_file" "debian-cloud" {
 	content_type = "import"
 	datastore_id = "local"
 	node_name = var.node_name
