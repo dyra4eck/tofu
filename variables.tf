@@ -9,9 +9,12 @@ variable "pve_token" {
 	description = "Токен PVE-ноды"
 }
 
-variable "vm_name" {
-	type = string
-	description = "Имя VM"
+variable "vm" {
+	type = map(object({
+		vm_id = number
+		ip = string
+	}))
+	description = "map для VM: ключ = hostname, значение = параметры""
 }
 
 variable "password_hash" {
