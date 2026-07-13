@@ -9,7 +9,7 @@ variable "pve_token" {
 	description = "Токен PVE-ноды"
 }
 
-variable "vm" {
+variable "vms" {
 	type = map(object({
 		vm_id = number
 		ip = string
