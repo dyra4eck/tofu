@@ -1,7 +1,8 @@
 resource "proxmox_virtual_environment_vm" "test" {
-	name = var.vm_name
+	for_each = var.vms
+	name = each.key
 	node_name = var.node_name
-	vm_id = 100
+	vm_id = each.value.vm_id
 
 	cpu {
 		cores = 1
@@ -31,7 +32,7 @@ resource "proxmox_virtual_environment_vm" "test" {
 	initialization {
 		ip_config {
 			ipv4 {
-				address = "192.168.100.50/24"
+				address = each.value.ip"
 				gateway = "192.168.100.1"
 			}
 		}
@@ -40,7 +41,11 @@ resource "proxmox_virtual_environment_vm" "test" {
 			servers = ["10.205.251.2"]
 		}
 
-		user_data_file_id = proxmox_virtual_environment_file.cloud_init.id
+		user_data_file_id = proxmox_virtual_environment_file.cloud_init[each.key].id
+	}
+
+	network_device {
+		bridge = "vmbr0"
 	}
 
 	tags = [ "devops", "sandbox" ]
