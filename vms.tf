@@ -41,7 +41,8 @@ resource "proxmox_virtual_environment_vm" "test" {
   }
 
   network_device {
-    bridge = "vmbr0"
+    bridge  = "vmbr1"
+    vlan_id = each.value.vlan_id
   }
 
   tags = ["devops", "sandbox"]

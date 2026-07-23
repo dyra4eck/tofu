@@ -11,8 +11,9 @@ variable "pve_token" {
 
 variable "vms" {
   type = map(object({
-    vm_id = number
-    ip    = string
+    vm_id   = number
+    ip      = string
+    vlan_id = number
   }))
   description = "map для VM: ключ = hostname, значение = параметры"
 }
