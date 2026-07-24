@@ -9,7 +9,9 @@ users:
     lock_passwd: false
     passwd: ${password_hash}
     ssh_authorized_keys:
-      - ${ssh_key}
+%{ for key in ssh_keys ~}
+			- ${key}
+%{ endfor ~}
 
 packages:
   - qemu-guest-agent

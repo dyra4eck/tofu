@@ -15,7 +15,7 @@ resource "proxmox_virtual_environment_vm" "test" {
 
   disk {
     datastore_id = "local-lvm"
-    import_from  = proxmox_download_file.debian-cloud.id
+    import_from  = proxmox_download_file.alma-cloud.id
     interface    = "scsi0"
     file_format  = "raw"
     size         = 4

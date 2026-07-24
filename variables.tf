@@ -23,3 +23,9 @@ variable "password_hash" {
   sensitive   = true
   description = "Хеш пароля (openssl passwd -6)"
 }
+
+variable "ssh_key_files" {
+  type        = list(string)
+  description = "Публичные ключи"
+  default     = ["~/.ssh/id_ed25519.pub", "~/.ssh/ansible-prod.pub"]
+}
