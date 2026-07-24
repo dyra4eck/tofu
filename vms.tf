@@ -5,12 +5,12 @@ resource "proxmox_virtual_environment_vm" "test" {
   vm_id     = each.value.vm_id
 
   cpu {
-    cores = 1
+    cores = 4
     type  = "host"
   }
 
   memory {
-    dedicated = 1024
+    dedicated = 8192
   }
 
   disk {
@@ -18,7 +18,7 @@ resource "proxmox_virtual_environment_vm" "test" {
     import_from  = proxmox_download_file.alma-cloud.id
     interface    = "scsi0"
     file_format  = "raw"
-    size         = 4
+    size         = 60
   }
 
   agent {

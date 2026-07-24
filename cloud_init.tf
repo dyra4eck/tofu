@@ -11,7 +11,7 @@ resource "proxmox_virtual_environment_file" "cloud_init" {
   source_raw {
     data = templatefile("${path.module}/cloud-init/user-data.yaml.tftpl", {
       vm_name       = each.key
-      ssh_key       = local.ssh_keys
+      ssh_keys       = local.ssh_keys
       password_hash = var.password_hash
     })
     file_name = "user-data-${each.key}.yaml"
