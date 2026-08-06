@@ -13,9 +13,12 @@ resource "proxmox_virtual_environment_vm" "test" {
     dedicated = 8192
   }
 
+	clone {
+		vm_id = 100
+	}
+
   disk {
     datastore_id = "local-lvm"
-    import_from  = proxmox_download_file.alma-cloud.id
     interface    = "scsi0"
     file_format  = "raw"
     size         = 60
@@ -34,6 +37,7 @@ resource "proxmox_virtual_environment_vm" "test" {
     }
 
     dns {
+      domain  = "insyres.ru"
       servers = ["10.205.251.2"]
     }
 
