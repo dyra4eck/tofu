@@ -55,19 +55,19 @@ variable "template_node_name" {
 ### user
 
 variable "vm_username" {
-	type = string
-	default = "admin"
+  type    = string
+  default = "admin"
 }
 
 variable "password_hash" {
-	type = string
-	sensitive = true
-	default = null
+  type      = string
+  sensitive = true
+  default   = null
 }
 
 variable "dns_servers" {
-	type = list(string)
-	default = []
+  type    = list(string)
+  default = []
 }
 
 ### сеть + datastore

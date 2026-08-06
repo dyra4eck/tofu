@@ -40,6 +40,7 @@ resource "proxmox_virtual_environment_vm" "this" {
     file_format  = "raw"
     size         = each.value.disk
     iothread     = true
+    ssd          = true
   }
 
   agent {
@@ -64,11 +65,11 @@ resource "proxmox_virtual_environment_vm" "this" {
       }
     }
 
-		user_account {
-			username = var.vm_username
-			password = var.password_hash
-			keys = local.ssh_keys
-		}
+    user_account {
+      username = var.vm_username
+      password = var.password_hash
+      keys     = local.ssh_keys
+    }
   }
 
   network_device {
