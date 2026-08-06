@@ -5,11 +5,7 @@ terraform {
 }
 
 provider "proxmox" {
-  endpoint  = "https://192.168.100.2:8006/"
-  api_token = var.pve_token
-  insecure  = true
-  ssh {
-    agent    = true
-    username = "root"
-  }
+	endpoing = var.pve_endpoint
+	api_token = var.pve_token
+	insecure = var.pve_insecure
 }
