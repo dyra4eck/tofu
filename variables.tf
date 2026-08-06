@@ -97,8 +97,8 @@ variable "network_firewall" {
 }
 
 variable "dns_domain" {
-  type        = list(string)
-  default     = []
+  type        = string
+  default     = null
   description = "пустой - резолв из dhcp"
 }
 
