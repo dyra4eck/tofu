@@ -1,7 +1,3 @@
-locals {
-  ssh_keys = [for p in var.ssh_key_files : trimspace(file(pathexpand(p)))]
-}
-
 resource "proxmox_virtual_environment_file" "cloud_init" {
   for_each     = var.vms
   content_type = "snippets"

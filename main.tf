@@ -5,7 +5,7 @@ terraform {
 }
 
 provider "proxmox" {
-	endpoing = var.pve_endpoint
-	api_token = var.pve_token
-	insecure = var.pve_insecure
+  endpoint  = var.pve_endpoint
+  api_token = var.pve_token
+  insecure  = var.pve_insecure
 }
