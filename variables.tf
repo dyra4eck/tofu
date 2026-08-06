@@ -52,6 +52,24 @@ variable "template_node_name" {
   description = "нода шаблона"
 }
 
+### user
+
+variable "vm_username" {
+	type = string
+	default = "admin"
+}
+
+variable "password_hash" {
+	type = string
+	sensitive = true
+	default = null
+}
+
+variable "dns_servers" {
+	type = list(string)
+	default = []
+}
+
 ### сеть + datastore
 
 variable "datastore_disk" {

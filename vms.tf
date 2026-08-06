@@ -64,7 +64,11 @@ resource "proxmox_virtual_environment_vm" "this" {
       }
     }
 
-    user_data_file_id = proxmox_virtual_environment_file.cloud_init[each.key].id
+		user_account {
+			username = var.vm_username
+			password = var.password_hash
+			keys = local.ssh_keys
+		}
   }
 
   network_device {
