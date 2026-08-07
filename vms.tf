@@ -6,15 +6,17 @@ resource "proxmox_virtual_environment_vm" "this" {
   for_each = var.vms
 
   name        = each.key
-  node_name   = var.node_name
+  node_name   = coalesce(each.value.node_name, var.node_name)
   vm_id       = each.value.vm_id
-  pool_id     = var.pool_id
+  pool_id     = coalesce(each.value.pool_id, var.pool_id)
   description = "руками не трогать 0_o"
-  tags        = var.default_tags
+  tags        = sort(distinct(concat(var.default_tags, each.value.tags)))
 
   machine       = "q35"
   scsi_hardware = "virtio-scsi-single"
-  on_boot       = var.on_boot
+  on_boot       = coalesce(each.value.on_boot, var.on_boot)
+  started       = each.value.started
+  protection    = each.value.protection
 
   stop_on_destroy = true
 
@@ -40,6 +42,7 @@ resource "proxmox_virtual_environment_vm" "this" {
     file_format  = "raw"
     size         = each.value.disk
     iothread     = true
+    backup       = each.value.backup
     ssd          = true
   }
 
@@ -73,10 +76,11 @@ resource "proxmox_virtual_environment_vm" "this" {
   }
 
   network_device {
-    bridge   = var.network_bridge
-    vlan_id  = var.network_vlan_id
-    firewall = var.network_firewall
-    model    = "virtio"
+    bridge      = var.network_bridge
+    vlan_id     = coalesce(each.value.vlan_id, var.network_vlan_id)
+    mac_address = each.value.mac_address
+    firewall    = var.network_firewall
+    model       = "virtio"
   }
 
   lifecycle {

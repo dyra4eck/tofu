@@ -122,13 +122,34 @@ variable "vms" {
   description = "map для vm: ключ = hostname"
 
   type = map(object({
-    vm_id   = number
-    ip      = optional(string, "dhcp")
-    gateway = optional(string)
+    # --- обязательно -----------------------------------
+    vm_id = number
+
+    # --- размещение -----------------------------------
+    node_name = optional(string) # null -> var.node_name
+    pool_id   = optional(string) # null -> var.pool_id
+
+    # --- сеть ------------------------------------------
+    ip          = optional(string, "dhcp")
+    gateway     = optional(string) # только для статики
+    vlan_id     = optional(number) # null -> var.network_vlan_id
+    mac_address = optional(string)
+
+    # --- железо ----------------------------------------
     cores   = optional(number, 3)
     sockets = optional(number, 2)
     memory  = optional(number, 8192)
-    disk    = optional(number, 50)
+    disk    = optional(number, 50) # только >= 50
+
+    # --- поведение -------------------------------------
+    on_boot    = optional(bool)        # null -> var.on_boot ток чето не работает нихуя, они все равно запускаются
+    started    = optional(bool, true)  # false = не запускать после создания
+    protection = optional(bool, false) # true = запрет на удаление в pve
+    backup     = optional(bool, false)
+
+    # --- tags -----------------------------------------
+    tags        = optional(list(string), []) # доавбление к default_tags
+    description = optional(string)           # null -> дефолтный текст
   }))
   # validation потом добавлю
 }
@@ -142,4 +163,10 @@ variable "ssh_key_files" {
   type        = list(string)
   description = "public ключи"
   default     = ["~/.ssh/id_ed25519.pub", "~/.ssh/ansible-prod.pub"]
+}
+
+variable "migrate_on_node_change" {
+  type        = bool
+  default     = true
+  description = "при смене node_name вм мигрирует, вместо пересоздания"
 }
