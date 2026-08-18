@@ -6,7 +6,6 @@ default:
     - tf
 
 validate:
-  stage: .pre
   script:
     - tofu fmt -check -recursive -diff
     - tofu init -backend=false
