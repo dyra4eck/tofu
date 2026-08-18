@@ -1,2 +1,12 @@
-secret.txt
+*.tfstate
+*.tfstate.*
+tfplan
+*.tfplan
+.terraform/
 terraform.tfvars
+*.auto.tfvars
+secret.txt
+*.swp
+*.swo
+*~
+.*.swp
