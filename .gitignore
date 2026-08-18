@@ -10,3 +10,4 @@ secret.txt
 *.swo
 *~
 .*.swp
+.idea/

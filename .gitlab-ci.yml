@@ -2,3 +2,5 @@ smoke:
   image: ghcr.io/opentofu/opentofu:1.10.6
   script:
     - tofu version
+  tags:
+    - tf
