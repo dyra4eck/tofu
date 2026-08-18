@@ -9,3 +9,4 @@ probe:
   script:
     - tofu fmt -check -recursive -diff
     - tofu init -backend=false
+    - tofu validate
