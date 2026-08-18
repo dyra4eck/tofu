@@ -1,5 +1,7 @@
 smoke:
-  image: ghcr.io/opentofu/opentofu:1.10.6
+  image:
+    name: ghcr.io/opentofu/opentofu:1.10.6
+    entrypoint: [""]
   script:
     - tofu version
   tags:
