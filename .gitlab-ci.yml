@@ -10,4 +10,8 @@ validate:
     - tofu fmt -check -recursive -diff
     - tofu init -backend=false
     - tofu validate
-    - tofu plan
+
+plan:
+  stage: plan
+  script:
+    - echo "FQDN=$STAND_FQDN OS=$STAND_OS RAM=$STAND_RAM"
