@@ -50,6 +50,10 @@ resource "proxmox_virtual_environment_vm" "this" {
     enabled = true
   }
 
+  operating_system {
+    type = "l26"
+  }
+
   initialization {
     datastore_id = var.datastore_disk
 
@@ -84,12 +88,13 @@ resource "proxmox_virtual_environment_vm" "this" {
   }
 
   lifecycle {
+    ignore_changes = [clone]
     precondition {
       condition = (
         each.value.vm_id >= var.vm_id_range[0] &&
         each.value.vm_id <= var.vm_id_range[1]
       )
-      error_message = "VMID ${each.value.vm_id} вышло за выделенный диапазон ${var.vm_id_range[0]}-${var.vm_id_range[1]}"
+      error_message = "VMID ${each.value.vm_id} вышло за выделенный диапазон ${var.vm_id_range[0]}-${var.vm_id_range[1]}."
     }
   }
 }
