@@ -10,3 +10,4 @@ validate:
     - tofu fmt -check -recursive -diff
     - tofu init -backend=false
     - tofu validate
+    - tofu plan
