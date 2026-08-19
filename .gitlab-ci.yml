@@ -5,6 +5,9 @@ default:
   tags:
     - tf
 
+stages:
+  - plan
+
 validate:
   script:
     - tofu fmt -check -recursive -diff
