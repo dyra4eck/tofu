@@ -19,3 +19,5 @@ plan:
   stage: plan
   script:
     - echo "FQDN=$STAND_FQDN OS=$STAND_OS RAM=$STAND_RAM"
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "push"
