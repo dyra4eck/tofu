@@ -50,7 +50,7 @@ plan:
       VMID=""
 
       for id in $(seq 302 305); do
-        if  wget -qO- --no-check-certificate \
+        if  wget -qO /dev/null --no-check-certificate \
               --header="Authorization: PVEAPIToken=$PROXMOX_VE_API_TOKEN" \
               "$PVE_API/cluster/nextid?vmid=$id"; then
             VMID="$id"
