@@ -25,12 +25,12 @@ plan:
       ZONE="${STAND_FQDN#*.}"
       echo "$HOST | $ZONE"
   rules:
-    - if: $STAND_FQDN == "" || $STAND_OS == "" || $STAND_RAM == ""
+    - if: $STAND_FQDN == null || $STAND_OS == null || $STAND_RAM == null
       when: never
     - if: $CI_PIPELINE_SOURCE == "api"
       when: on_success
     - if: $CI_PIPELINE_SOURCE == "web"
       when: on_success
     - if: $CI_PIPELINE_SOURCE == "trigger"
-      when: always
+      when: on_sucess
     - when: never
