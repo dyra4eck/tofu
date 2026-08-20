@@ -28,7 +28,7 @@ plan:
         exit 1
       fi
 
-      if [ "$STAND_RAM" -gt 50 ] 
+      if [ "$STAND_RAM" -gt 50 ]; then 
         echo "Чрезмерное выделение RAM: $STAND_RAM > 50"
         exit 1
       fi
