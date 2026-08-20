@@ -20,7 +20,6 @@ plan:
   stage: plan
   script:
     - |
-      echo "FQDN=$STAND_FQDN OS=$STAND_OS RAM=$STAND_RAM"
       HOST="${STAND_FQDN%%.*}"
       ZONE="${STAND_FQDN#*.}"
       if [ "$HOST" = "$ZONE" ]; then
@@ -28,11 +27,15 @@ plan:
         exit 1
       fi
 
+      if ! echo "$STAND_RAM" | grep -Eq '^[0-9]+$'; then
+        echo "RAM задан не как число: $STAND_RAM"
+        exit 1
+
       if [ "$STAND_RAM" -gt 50 ]; then 
         echo "Чрезмерное выделение RAM: $STAND_RAM > 50"
         exit 1
       fi
-      
+
       case "$STAND_OS" in 
         redos|astra)
         ;;
@@ -44,12 +47,6 @@ plan:
 
       echo "$HOST | $ZONE"
   rules:
-    - if: $STAND_FQDN == null || $STAND_OS == null || $STAND_RAM == null
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "api"
-      when: on_success
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: on_success
-    - if: $CI_PIPELINE_SOURCE == "trigger"
+    - if: '$STAND_FQDN && $STAND_OS && $STAND_RAM && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: on_success
     - when: never
