@@ -32,5 +32,5 @@ plan:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: on_success
     - if: $CI_PIPELINE_SOURCE == "trigger"
-      when: on_sucess
+      when: on_success
     - when: never
