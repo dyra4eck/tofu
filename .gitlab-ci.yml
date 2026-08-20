@@ -37,6 +37,7 @@ plan:
         redos|astra)
         ;;
         *)
+        echo "STAND_OS задан неверно: $STAND_OS"
         exit1
         ;;
       esac
