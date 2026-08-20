@@ -46,6 +46,23 @@ plan:
         ;;
       esac
 
+      PVE_API="https://10.205.251.3:8006/api2/json"
+      VMID=""
+      for id in $(seq 302 349); do
+        if  wget -qO- --no-check-certificate \
+              --header="Authorization: PVEAPIToken=$PROXMOX_VE_API_TOKEN" \
+              "$PVE_API/cluster/nextid?vmid=$id"; then
+            VMID="$id"
+            break;
+        fi
+      done
+
+      if [ -z "$VMID" ]; then
+        echo "Нет свободных VMID в диапазоне"
+        exit 1
+      fi
+      echo "$VMID"      
+
       echo "$HOST | $ZONE"
   rules:
     - if: '$STAND_FQDN && $STAND_OS && $STAND_RAM && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
