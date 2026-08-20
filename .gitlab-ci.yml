@@ -23,6 +23,24 @@ plan:
       echo "FQDN=$STAND_FQDN OS=$STAND_OS RAM=$STAND_RAM"
       HOST="${STAND_FQDN%%.*}"
       ZONE="${STAND_FQDN#*.}"
+      if [ "$HOST" = "$ZONE" ]; then
+        echo "STAND_FQDN должен быть FQDN: $STAND_FQDN"
+        exit 1
+      fi
+
+      if [ "$STAND_RAM" -gt 50 ] 
+        echo "Чрезмерное выделение RAM: $STAND_RAM > 50"
+        exit 1
+      fi
+      
+      case "$STAND_OS" in 
+        redos|astra)
+        ;;
+        *)
+        exit1
+        ;;
+      esac
+
       echo "$HOST | $ZONE"
   rules:
     - if: $STAND_FQDN == null || $STAND_OS == null || $STAND_RAM == null
