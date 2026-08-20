@@ -63,8 +63,17 @@ plan:
         exit 1
       fi
       echo "$VMID"      
-
       echo "$HOST | $ZONE"
+
+      cat  > pipeline.auto.tfvars <<EOF
+      vms = {
+        "${HOST}" = {
+          vm_id = ${VMID}
+          memory = $(( STAND_RAM * 1024 ))
+        }
+      }
+      EOF
+
   rules:
     - if: '$STAND_FQDN && $STAND_OS && $STAND_RAM && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: on_success
