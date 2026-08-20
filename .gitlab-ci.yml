@@ -9,6 +9,7 @@ stages:
   - plan
 
 validate:
+  stage: plan
   script:
     - tofu fmt -check -recursive -diff
     - tofu init -backend=false
