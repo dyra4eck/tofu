@@ -48,7 +48,11 @@ plan:
 
       PVE_API="https://10.205.251.3:8006/api2/json"
       VMID=""
-      for id in $(seq 302 349); do
+
+      echo "len=${#PROXMOX_VE_API_TOKEN}"
+      echo "id=${PROXMOX_VE_API_TOKEN%%=*}"
+
+      for id in $(seq 302 305); do
         if  wget -qO- --no-check-certificate \
               --header="Authorization: PVEAPIToken=$PROXMOX_VE_API_TOKEN" \
               "$PVE_API/cluster/nextid?vmid=$id"; then
