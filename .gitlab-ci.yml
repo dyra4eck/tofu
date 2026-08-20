@@ -6,10 +6,11 @@ default:
     - tf
 
 stages:
+  - validate
   - plan
 
 validate:
-  stage: plan
+  stage: validate 
   script:
     - tofu fmt -check -recursive -diff
     - tofu init -backend=false
@@ -18,6 +19,18 @@ validate:
 plan:
   stage: plan
   script:
-    - echo "FQDN=$STAND_FQDN OS=$STAND_OS RAM=$STAND_RAM"
+    - |
+      echo "FQDN=$STAND_FQDN OS=$STAND_OS RAM=$STAND_RAM"
+      HOST="${STAND_FQDN%%.*}"
+      ZONE="${STAND_FQDN#*.}"
+      echo "$HOST | $ZONE"
   rules:
-    - if: $CI_PIPELINE_SOURCE != "push"
+    - if: $STAND_FQDN == "" || $STAND_OS == "" || $STAND_RAM == ""
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "api"
+      when: on_success
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: success
+    - if: $CI_PIPELINE_SOURCE == "trigger"
+      when: always
+    - when: never
