@@ -162,7 +162,7 @@ variable "default_tags" {
 variable "ssh_key_files" {
   type        = list(string)
   description = "public ключи"
-  default     = ["~/.ssh/id_ed25519.pub", "~/.ssh/ansible-prod.pub"]
+  default     = ["keys/id_ed25519.pub", "keys/ansible-prod.pub"]
 }
 
 variable "migrate_on_node_change" {

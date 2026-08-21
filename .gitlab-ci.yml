@@ -78,6 +78,7 @@ plan:
           memory = $(( STAND_RAM * 1024 ))
         }
       }
+      ssh_key_files = []
       EOF
 
       ls -la
