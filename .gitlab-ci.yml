@@ -78,7 +78,6 @@ plan:
           memory = $(( STAND_RAM * 1024 ))
         }
       }
-      ssh_key_files = []
       EOF
 
       ls -la
@@ -95,6 +94,7 @@ plan:
 
       tofu init
       tofu plan -out=tfplan
+      tofu show
   artifacts:
     paths:
       - pipeline.auto.tfvars
