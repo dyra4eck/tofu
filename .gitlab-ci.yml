@@ -93,7 +93,7 @@ plan:
       export TF_HTTP_UNLOCK_METHOD=DELETE
 
       tofu init
-
+      tofu plan -out=tfplan
   artifacts:
     paths:
       - pipeline.auto.tfvars
