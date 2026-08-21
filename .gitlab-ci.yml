@@ -77,6 +77,9 @@ plan:
       ls -la
       cat pipeline.auto.tfvars
 
+  artifacts:
+    paths:
+      - pipeline.auto.tfvars
   rules:
     - if: '$STAND_FQDN && $STAND_OS && $STAND_RAM && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: on_success
