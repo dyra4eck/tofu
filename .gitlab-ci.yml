@@ -94,7 +94,9 @@ plan:
 
       tofu init
       tofu plan -out=tfplan
-      tofu show
+      tofu show -json tfplan > plan.json
+      cat plan.json
+
   artifacts:
     paths:
       - pipeline.auto.tfvars
