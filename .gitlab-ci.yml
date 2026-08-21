@@ -66,6 +66,12 @@ plan:
       echo "$HOST | $ZONE"
 
       cat  > pipeline.auto.tfvars <<EOF
+      pve_endpoint = "https://10.205.251.3:8006/"
+      node_name    = "pve03"
+      pool_id      = "TEST_TF"
+      
+      vm_id_range    = [302, 349]
+      template_vm_id = 350
       vms = {
         "${HOST}" = {
           vm_id = ${VMID}
@@ -76,6 +82,15 @@ plan:
 
       ls -la
       cat pipeline.auto.tfvars
+
+      export TF_VAR_pve_token="$PROXMIX_VE_API_TOKEN"
+      export TF_HTTP_ADDRESS="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/terraform/state/stand-${HOST}"
+      export TF_HTTP_LOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
+      export TF_HTTP_UNLOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
+      export TF_HTTP_LOCK_METHOD=POST
+      export TF_HTTP_UNLOCK_METHOD=DELETE
+
+      tofu init
 
   artifacts:
     paths:
