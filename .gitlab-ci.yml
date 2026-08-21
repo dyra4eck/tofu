@@ -83,7 +83,9 @@ plan:
       ls -la
       cat pipeline.auto.tfvars
 
-      export TF_VAR_pve_token="$PROXMIX_VE_API_TOKEN"
+      export TF_VAR_pve_token="$PROXMOX_VE_API_TOKEN"
+      export TF_HTTP_USERNAME="gitlab-ci-token"
+      export TF_HTTP_PASSWORD="${CI_JOB_TOKEN}"
       export TF_HTTP_ADDRESS="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/terraform/state/stand-${HOST}"
       export TF_HTTP_LOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
       export TF_HTTP_UNLOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
