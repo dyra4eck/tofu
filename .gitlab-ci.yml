@@ -75,7 +75,16 @@ plan:
       vms = {
         "${HOST}" = {
           vm_id = ${VMID}
+          node_name = ${STAND_NODE_NAME}
+          pool_id = ${STAND_POOL_ID}
+          
+          cores = ${STAND_CORES}
+          sockets = ${STAND_SOCKETS}
           memory = $(( STAND_RAM * 1024 ))
+          disk = ${STAND_DISK}
+          
+          tags = ${STAND_TAGS}
+          description = ${STAND_DESCRIPTION}
         }
       }
       EOF
