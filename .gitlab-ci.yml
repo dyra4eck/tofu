@@ -27,13 +27,13 @@ plan:
         exit 1
       fi
 
-      if ! echo "$STAND_RAM" | grep -Eq '^[0-9]+$'; then
-        echo "RAM задан не как число: $STAND_RAM"
+      if ! echo "$STAND_MEMORY" | grep -Eq '^[0-9]+$'; then
+        echo "RAM задан не как число: $STAND_MEMORY"
         exit 1
       fi
 
-      if [ "$STAND_RAM" -gt 50 ]; then 
-        echo "Чрезмерное выделение RAM: $STAND_RAM > 50"
+      if [ "$STAND_MEMORY" -gt 50 ]; then 
+        echo "Чрезмерное выделение RAM: $STAND_MEMORY > 50"
         exit 1
       fi
 
