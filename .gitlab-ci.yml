@@ -65,6 +65,24 @@ plan:
       echo "$VMID"      
       echo "$HOST | $ZONE"
 
+      EXTRA=""
+      [ -n "${STAND_NODE_NAME}" ] && EXTRA="${EXTRA} node_name = ${STAND_NODE_NAME}\n"
+      [ -n "${STAND_POOL_ID}" ] && EXTRA="${EXTRA} pool_id = ${STAND_POOL_ID}\n"
+      [ -n "${STAND_IP}" ] && EXTRA="${EXTRA} ip = ${STAND_IP}\n"
+      [ -n "${STAND_GATEWAY}" ] && EXTRA="${EXTRA} gateway = ${STAND_GATEWAY}\n"
+      [ -n "${STAND_VLAN_ID}" ] && EXTRA="${EXTRA} vlan_id = ${STAND_VLAN_ID}\n"
+      [ -n "${STAND_MAC_ADDRESS}" ] && EXTRA="${EXTRA} mac_address = ${STAND_MAC_ADDRESS}\n"
+      [ -n "${STAND_CORES}" ] && EXTRA="${EXTRA} cores = ${STAND_CORES}\n"
+      [ -n "${STAND_SOCKETS}" ] && EXTRA="${EXTRA} sockets = ${STAND_SOCKETS}\n"
+      [ -n "${STAND_MEMORY}" ] && EXTRA="${EXTRA} memory = $(( STAND_MEMORY * 1024 ))\n"
+      [ -n "${STAND_DISK}" ] && EXTRA="${EXTRA} disk = ${STAND_DISK}\n"
+      [ -n "${STAND_ON_BOOT}" ] && EXTRA="${EXTRA} on_boot = ${STAND_ON_BOOT}\n"
+      [ -n "${STAND_STARTED}" ] && EXTRA="${EXTRA} started = ${STAND_STARTED}\n"
+      [ -n "${STAND_PROTECTION}" ] && EXTRA="${EXTRA} protection = ${STAND_PROTECTION}\n"
+      [ -n "${STAND_BACKUP}" ] && EXTRA="${EXTRA} backup = ${STAND_BACKUP}\n"
+      [ -n "${STAND_TAGS}" ] && EXTRA="${EXTRA} tags = ${STAND_TAGS}\n"
+      [ -n "${STAND_DESCRIPTION}" ] && EXTRA="${EXTRA} description = ${STAND_DESCRIPTION}"
+      
       cat  > pipeline.auto.tfvars <<EOF
       pve_endpoint = "https://10.205.251.3:8006/"
       node_name    = "pve03"
@@ -75,16 +93,7 @@ plan:
       vms = {
         "${HOST}" = {
           vm_id = ${VMID}
-          node_name = ${STAND_NODE_NAME}
-          pool_id = ${STAND_POOL_ID}
-          
-          cores = ${STAND_CORES}
-          sockets = ${STAND_SOCKETS}
-          memory = $(( STAND_RAM * 1024 ))
-          disk = ${STAND_DISK}
-          
-          tags = ${STAND_TAGS}
-          description = ${STAND_DESCRIPTION}
+          ${EXTRA}
         }
       }
       EOF
@@ -109,7 +118,8 @@ plan:
   artifacts:
     paths:
       - pipeline.auto.tfvars
+      - tfplan
   rules:
-    - if: '$STAND_FQDN && $STAND_OS && $STAND_RAM && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
+    - if: '$STAND_FQDN && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: on_success
     - when: never

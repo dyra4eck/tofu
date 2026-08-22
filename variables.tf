@@ -142,7 +142,7 @@ variable "vms" {
     disk    = optional(number, 50) # только >= 50
 
     # --- поведение -------------------------------------
-    on_boot    = optional(bool)        # null -> var.on_boot ток чето не работает нихуя, они все равно запускаются
+    on_boot    = optional(bool)        # null -> var.on_boot работает 
     started    = optional(bool, true)  # false = не запускать после создания
     protection = optional(bool, false) # true = запрет на удаление в pve
     backup     = optional(bool, false)
