@@ -8,6 +8,7 @@ default:
 stages:
   - validate
   - plan
+  - apply
 
 validate:
   stage: validate 
@@ -128,7 +129,6 @@ plan:
       tofu init
       tofu plan -out=tfplan
       tofu show -json tfplan > plan.json
-      cat plan.json
 
   artifacts:
     paths:
@@ -138,3 +138,24 @@ plan:
     - if: '$STAND_FQDN && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: on_success
     - when: never
+
+apply:
+  stage: apply
+  needs: [plan]
+  script:
+    - |
+      HOST="${STAND_FQDN%%.*}"
+      export TF_VAR_pve_token="$PROXMOX_VE_API_TOKEN"
+      export TF_HTTP_USERNAME="gitlab-ci-token"
+      export TF_HTTP_PASSWORD="${CI_JOB_TOKEN}"
+      export TF_HTTP_ADDRESS="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/terraform/state/stand-${HOST}"
+      export TF_HTTP_LOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
+      export TF_HTTP_UNLOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
+      export TF_HTTP_LOCK_METHOD=POST
+      export TF_HTTP_UNLOCK_METHOD=DELETE
+
+      tofu init
+      tofu apply -input=false tfplan
+  rules:
+    - if: '$STAND_FQDN && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
+      when: manual
