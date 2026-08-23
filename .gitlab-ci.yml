@@ -105,7 +105,7 @@ plan:
       pool_id      = "TEST_TF"
       
       vm_id_range    = [302, 349]
-      template_vm_id = 350
+      template_vm_id = 351
       vms = {
         "${HOST}" = {
           vm_id = ${VMID}
@@ -126,6 +126,7 @@ plan:
       export TF_HTTP_LOCK_METHOD=POST
       export TF_HTTP_UNLOCK_METHOD=DELETE
 
+      export TF_VAR_password_hash="$(printf '%s' "$STAND_PASSWORD_HASH_B64" | base64 -d | tr -d '\n')"
       tofu init
       tofu plan -out=tfplan
       tofu show -json tfplan > plan.json
@@ -154,6 +155,7 @@ apply:
       export TF_HTTP_LOCK_METHOD=POST
       export TF_HTTP_UNLOCK_METHOD=DELETE
 
+      export TF_VAR_password_hash="$(printf '%s' "$STAND_PASSWORD_HASH_B64" | base64 -d | tr -d '\n')"
       tofu init
       tofu apply -input=false tfplan
   rules:
