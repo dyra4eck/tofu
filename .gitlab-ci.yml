@@ -21,6 +21,11 @@ plan:
   stage: plan
   script:
     - |
+      for v in STAND_FQND STAND_OS STAND_MEMORY STAND_DISK STAND_CORES; do
+        eval "val=\$$v"
+        [ -n "$val" ] || { echo "Не задана обязательная переменная $v"; exit 1; }
+      done
+
       HOST="${STAND_FQDN%%.*}"
       ZONE="${STAND_FQDN#*.}"
       if [ "$HOST" = "$ZONE" ]; then
@@ -100,7 +105,7 @@ plan:
       cat  > pipeline.auto.tfvars <<EOF
       pve_endpoint = "https://10.205.251.3:8006/"
       node_name    = "pve03"
-      pool_id      = "TEST_TF"
+      pool_id      = "NONAME"
       
       vm_id_range    = [302, 349]
       template_vm_id = 351
@@ -134,7 +139,7 @@ plan:
       - pipeline.auto.tfvars
       - tfplan
   rules:
-    - if: '$STAND_FQDN && $STAND_OS && $STAND_MEMORY && $STAND_DISK && $STAND_CORES && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
+    - if: '$STAND_FQDN && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: on_success
     - when: never
 
@@ -157,5 +162,5 @@ apply:
       tofu init
       tofu apply -input=false tfplan
   rules:
-    - if: '$STAND_FQDN && $STAND_OS && $STAND_MEMORY && $STAND_DISK && $STAND_CORES && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
+    - if: '$STAND_FQDN && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: manual
