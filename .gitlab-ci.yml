@@ -67,17 +67,17 @@ plan:
       echo "$HOST | $ZONE"
 
       EXTRA=""
-      [ -n "${STAND_NODE_NAME}" ] && EXTRA="${EXTRA} node_name = ${STAND_NODE_NAME}
+      [ -n "${STAND_NODE_NAME}" ] && EXTRA="${EXTRA} node_name = \"${STAND_NODE_NAME}\"
       "
-      [ -n "${STAND_POOL_ID}" ] && EXTRA="${EXTRA} pool_id = ${STAND_POOL_ID}
+      [ -n "${STAND_POOL_ID}" ] && EXTRA="${EXTRA} pool_id = \"${STAND_POOL_ID}\"
       "
-      [ -n "${STAND_IP}" ] && EXTRA="${EXTRA} ip = ${STAND_IP}
+      [ -n "${STAND_IP}" ] && EXTRA="${EXTRA} ip = \"${STAND_IP}\"
       "
-      [ -n "${STAND_GATEWAY}" ] && EXTRA="${EXTRA} gateway = ${STAND_GATEWAY}
+      [ -n "${STAND_GATEWAY}" ] && EXTRA="${EXTRA} gateway = \"${STAND_GATEWAY}\"
       "
       [ -n "${STAND_VLAN_ID}" ] && EXTRA="${EXTRA} vlan_id = ${STAND_VLAN_ID}
       "
-      [ -n "${STAND_MAC_ADDRESS}" ] && EXTRA="${EXTRA} mac_address = ${STAND_MAC_ADDRESS}
+      [ -n "${STAND_MAC_ADDRESS}" ] && EXTRA="${EXTRA} mac_address = \"${STAND_MAC_ADDRESS}\"
       "
       [ -n "${STAND_CORES}" ] && EXTRA="${EXTRA} cores = ${STAND_CORES}
       "
@@ -97,7 +97,7 @@ plan:
       "
       [ -n "${STAND_TAGS}" ] && EXTRA="${EXTRA} tags = ${STAND_TAGS}
       "
-      [ -n "${STAND_DESCRIPTION}" ] && EXTRA="${EXTRA} description = ${STAND_DESCRIPTION}"
+      [ -n "${STAND_DESCRIPTION}" ] && EXTRA="${EXTRA} description = \"${STAND_DESCRIPTION}\""
       
       cat  > pipeline.auto.tfvars <<EOF
       pve_endpoint = "https://10.205.251.3:8006/"
