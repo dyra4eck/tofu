@@ -137,7 +137,7 @@ variable "vms" {
 
     # --- железо ----------------------------------------
     cores   = optional(number, 3)
-    sockets = optional(number, 2)
+    sockets = optional(number, 1)
     memory  = optional(number, 8192)
     disk    = optional(number, 50) # только >= 50
 
