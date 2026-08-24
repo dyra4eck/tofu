@@ -81,8 +81,6 @@ plan:
       "
       [ -n "${STAND_CORES}" ] && EXTRA="${EXTRA} cores = ${STAND_CORES}
       "
-      [ -n "${STAND_SOCKETS}" ] && EXTRA="${EXTRA} sockets = ${STAND_SOCKETS}
-      "
       [ -n "${STAND_MEMORY}" ] && EXTRA="${EXTRA} memory = $(( STAND_MEMORY * 1024 ))
       "
       [ -n "${STAND_DISK}" ] && EXTRA="${EXTRA} disk = ${STAND_DISK}
@@ -136,7 +134,7 @@ plan:
       - pipeline.auto.tfvars
       - tfplan
   rules:
-    - if: '$STAND_FQDN && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
+    - if: '$STAND_FQDN && $STAND_OS && $STAND_MEMORY && $STAND_DISK && $STAND_CORES && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: on_success
     - when: never
 
@@ -159,5 +157,5 @@ apply:
       tofu init
       tofu apply -input=false tfplan
   rules:
-    - if: '$STAND_FQDN && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
+    - if: '$STAND_FQDN && $STAND_OS && $STAND_MEMORY && $STAND_DISK && $STAND_CORES && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: manual
