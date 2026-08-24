@@ -34,7 +34,17 @@ plan:
       fi
 
       if ! echo "$STAND_MEMORY" | grep -Eq '^[0-9]+$'; then
-        echo "RAM задан не как число: $STAND_MEMORY"
+        echo "STAND_MEMORY задан не как число: $STAND_MEMORY"
+        exit 1
+      fi
+
+      if ! echo "$STAND_CORES" | grep -Eq '^[0-9]+$'; then
+        echo "STAND_CORES задан не как число: $STAND_CORES"
+        exit 1
+      fi
+
+      if ! echo "$STAND_DISK" | grep -Eq '^[0-9]+$'; then
+        echo "STAND_DISK задан не как число: $STAND_DISK"
         exit 1
       fi
 
@@ -47,7 +57,7 @@ plan:
         redos|astra)
         ;;
         *)
-        echo "STAND_OS задан неверно: $STAND_OS"
+        echo "STAND_OS задан неверно: $STAND_OS. Варианты: astra | redos"
         exit 1
         ;;
       esac
@@ -55,7 +65,7 @@ plan:
       PVE_API="https://10.205.251.3:8006/api2/json"
       VMID=""
 
-      for id in $(seq 302 305); do
+      for id in $(seq 302 350); do
         if  wget -qO /dev/null --no-check-certificate \
               --header="Authorization: PVEAPIToken=$PROXMOX_VE_API_TOKEN" \
               "$PVE_API/cluster/nextid?vmid=$id"; then
