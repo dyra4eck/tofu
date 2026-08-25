@@ -56,7 +56,7 @@ resource "proxmox_virtual_environment_vm" "this" {
 
   initialization {
     datastore_id      = var.datastore_disk
-    user_data_file_id = proxmox_virtual_environment_file.dns_register.id
+    user_data_file_id = "local:snippets/dns-register.yaml"
 
     ip_config {
       ipv4 {
