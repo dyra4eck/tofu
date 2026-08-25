@@ -48,7 +48,7 @@ variable "template_vm_id" {
 
 variable "template_node_name" {
   type        = string
-  default     = null
+  default     = "pve03"
   description = "нода шаблона"
 }
 
