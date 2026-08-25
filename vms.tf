@@ -11,7 +11,6 @@ resource "proxmox_virtual_environment_vm" "this" {
   pool_id     = coalesce(each.value.pool_id, var.pool_id)
   description = "руками не трогать 0_o"
   tags        = sort(distinct(concat(var.default_tags, each.value.tags)))
-  reboot      = true
 
   machine       = "q35"
   scsi_hardware = "virtio-scsi-single"
@@ -56,7 +55,8 @@ resource "proxmox_virtual_environment_vm" "this" {
   }
 
   initialization {
-    datastore_id = var.datastore_disk
+    datastore_id      = var.datastore_disk
+    user_data_file_id = proxmox_virtual_environment_file.dns_register.id
 
     ip_config {
       ipv4 {
