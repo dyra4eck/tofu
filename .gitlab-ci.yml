@@ -5,6 +5,17 @@ default:
   tags:
     - tf
 
+.tf_backend: &tf_backend |  
+  export TF_VAR_pve_token="$PROXMOX_VE_API_TOKEN"
+  export TF_HTTP_USERNAME="gitlab-ci-token"
+  export TF_HTTP_PASSWORD="${CI_JOB_TOKEN}"
+  export TF_HTTP_ADDRESS="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/terraform/state/stand-${HOST}"
+  export TF_HTTP_LOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
+  export TF_HTTP_UNLOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
+  export TF_HTTP_LOCK_METHOD=POST
+  export TF_HTTP_UNLOCK_METHOD=DELETE
+  export TF_VAR_password_hash="$(printf '%s' "$STAND_PASSWORD_HASH_B64" | base64 -d | tr -d '\n')"
+
 stages:
   - validate
   - plan
@@ -130,19 +141,11 @@ plan:
       ls -la
       cat pipeline.auto.tfvars
 
-      export TF_VAR_pve_token="$PROXMOX_VE_API_TOKEN"
-      export TF_HTTP_USERNAME="gitlab-ci-token"
-      export TF_HTTP_PASSWORD="${CI_JOB_TOKEN}"
-      export TF_HTTP_ADDRESS="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/terraform/state/stand-${HOST}"
-      export TF_HTTP_LOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
-      export TF_HTTP_UNLOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
-      export TF_HTTP_LOCK_METHOD=POST
-      export TF_HTTP_UNLOCK_METHOD=DELETE
-
-      export TF_VAR_password_hash="$(printf '%s' "$STAND_PASSWORD_HASH_B64" | base64 -d | tr -d '\n')"
+      *tf_backend
       tofu init
       tofu plan -out=tfplan
       tofu show -json tfplan > plan.json
+      tofu show -no-color tfplan
 
   artifacts:
     paths:
@@ -159,16 +162,7 @@ apply:
   script:
     - |
       HOST="${STAND_FQDN%%.*}"
-      export TF_VAR_pve_token="$PROXMOX_VE_API_TOKEN"
-      export TF_HTTP_USERNAME="gitlab-ci-token"
-      export TF_HTTP_PASSWORD="${CI_JOB_TOKEN}"
-      export TF_HTTP_ADDRESS="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/terraform/state/stand-${HOST}"
-      export TF_HTTP_LOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
-      export TF_HTTP_UNLOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
-      export TF_HTTP_LOCK_METHOD=POST
-      export TF_HTTP_UNLOCK_METHOD=DELETE
-
-      export TF_VAR_password_hash="$(printf '%s' "$STAND_PASSWORD_HASH_B64" | base64 -d | tr -d '\n')"
+      *tf_backend
       tofu init
       tofu apply -input=false tfplan
   rules:
