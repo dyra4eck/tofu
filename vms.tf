@@ -56,7 +56,7 @@ resource "proxmox_virtual_environment_vm" "this" {
 
   initialization {
     datastore_id        = var.datastore_disk
-    vendor_data_file_id = "local:snippets/dns-register.yaml"
+    vendor_data_file_id = var.stand_os == "astra" ? "local:snippets/dns-register-astra.yaml" : "local:snippets/dns-register.yaml"
 
     ip_config {
       ipv4 {

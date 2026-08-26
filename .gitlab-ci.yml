@@ -65,7 +65,11 @@ plan:
       fi
 
       case "$STAND_OS" in 
-        redos|astra)
+        redos)
+          TEMPlATE_ID=351
+        ;;
+        astra)
+          TEMPLATE_ID=142
         ;;
         *)
         echo "STAND_OS задан неверно: $STAND_OS. Варианты: astra | redos"
@@ -129,7 +133,8 @@ plan:
       pool_id      = "NONAME"
       
       vm_id_range    = [302, 349]
-      template_vm_id = 351
+      template_vm_id = ${TEMPLATE_ID}
+      stand_os = "${STAND_OS}"
       vms = {
         "${HOST}" = {
           vm_id = ${VMID}
