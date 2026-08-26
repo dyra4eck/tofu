@@ -145,7 +145,6 @@ plan:
     - tofu init
     - tofu plan -out=tfplan
     - tofu show -json tfplan > plan.json
-    - tofu show -no-color tfplan
 
   artifacts:
     paths:
