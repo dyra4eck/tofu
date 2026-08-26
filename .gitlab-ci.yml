@@ -141,11 +141,11 @@ plan:
       ls -la
       cat pipeline.auto.tfvars
 
-      *tf_backend
-      tofu init
-      tofu plan -out=tfplan
-      tofu show -json tfplan > plan.json
-      tofu show -no-color tfplan
+    - *tf_backend
+    - tofu init
+    - tofu plan -out=tfplan
+    - tofu show -json tfplan > plan.json
+    - tofu show -no-color tfplan
 
   artifacts:
     paths:
@@ -162,9 +162,9 @@ apply:
   script:
     - |
       HOST="${STAND_FQDN%%.*}"
-      *tf_backend
-      tofu init
-      tofu apply -input=false tfplan
+    - *tf_backend
+    - tofu init
+    - tofu apply -input=false tfplan
   rules:
     - if: '$STAND_FQDN && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: manual
