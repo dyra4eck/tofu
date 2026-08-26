@@ -52,6 +52,12 @@ variable "template_node_name" {
   description = "нода шаблона"
 }
 
+variable "stand_os" {
+  type        = string
+  default     = "redos"
+  description = "astra | redos"
+}
+
 ### user
 
 variable "vm_username" {
