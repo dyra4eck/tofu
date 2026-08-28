@@ -29,15 +29,15 @@ variable "pool_id" {
   description = "пул вмок"
 }
 
-variable "vm_id_range" {
-  type        = list(number)
-  description = "диапазон vmid"
-
-  validation {
-    condition     = length(var.vm_id_range) == 2 && var.vm_id_range[0] < var.vm_id_range[1]
-    error_message = "vm_id_range должен быть между [min, max]"
-  }
-}
+#variable "vm_id_range" {
+#  type        = list(number)
+#  description = "диапазон vmid"
+#
+#  validation {
+#    condition     = length(var.vm_id_range) == 2 && var.vm_id_range[0] < var.vm_id_range[1]
+#    error_message = "vm_id_range должен быть между [min, max]"
+#  }
+#}
 
 ### source
 
@@ -129,7 +129,7 @@ variable "vms" {
 
   type = map(object({
     # --- обязательно -----------------------------------
-    vm_id = number
+    #    vm_id = number
 
     # --- размещение -----------------------------------
     node_name = optional(string) # null -> var.node_name

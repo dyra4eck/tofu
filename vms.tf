@@ -5,9 +5,9 @@ locals {
 resource "proxmox_virtual_environment_vm" "this" {
   for_each = var.vms
 
-  name        = each.key
-  node_name   = coalesce(each.value.node_name, var.node_name)
-  vm_id       = each.value.vm_id
+  name      = each.key
+  node_name = coalesce(each.value.node_name, var.node_name)
+  #  vm_id       = each.value.vm_id
   pool_id     = coalesce(each.value.pool_id, var.pool_id)
   description = "руками не трогать 0_o"
   tags        = sort(distinct(concat(var.default_tags, each.value.tags)))
@@ -90,12 +90,12 @@ resource "proxmox_virtual_environment_vm" "this" {
 
   lifecycle {
     ignore_changes = [clone]
-    precondition {
-      condition = (
-        each.value.vm_id >= var.vm_id_range[0] &&
-        each.value.vm_id <= var.vm_id_range[1]
-      )
-      error_message = "VMID ${each.value.vm_id} вышло за выделенный диапазон ${var.vm_id_range[0]}-${var.vm_id_range[1]}."
-    }
+    #    precondition {
+    #  condition = (
+    #    each.value.vm_id >= var.vm_id_range[0] &&
+    #    each.value.vm_id <= var.vm_id_range[1]
+    #  )
+    #  error_message = "VMID ${each.value.vm_id} вышло за выделенный диапазон ${var.vm_id_range[0]}-${var.vm_id_range[1]}."
+    #    }
   }
 }

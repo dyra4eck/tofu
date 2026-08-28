@@ -20,6 +20,7 @@ stages:
   - validate
   - plan
   - apply
+  - destroy
 
 validate:
   stage: validate 
@@ -77,23 +78,21 @@ plan:
         ;;
       esac
 
-      PVE_API="https://10.205.251.3:8006/api2/json"
-      VMID=""
-
-      for id in $(seq 302 350); do
-        if  wget -qO /dev/null --no-check-certificate \
-              --header="Authorization: PVEAPIToken=$PROXMOX_VE_API_TOKEN" \
-              "$PVE_API/cluster/nextid?vmid=$id"; then
-            VMID="$id"
-            break;
-        fi
-      done
-
-      if [ -z "$VMID" ]; then
-        echo "Нет свободных VMID в диапазоне"
-        exit 1
-      fi
-      echo "$VMID"      
+      #PVE_API="https://10.205.251.3:8006/api2/json"
+      #VMID=""
+      #for id in $(seq 302 350); do
+      #  if  wget -qO /dev/null --no-check-certificate \
+      #        --header="Authorization: PVEAPIToken=$PROXMOX_VE_API_TOKEN" \
+      #        "$PVE_API/cluster/nextid?vmid=$id"; then
+      #      VMID="$id"
+      #      break;
+      #  fi
+      #done
+      #if [ -z "$VMID" ]; then
+      #  echo "Нет свободных VMID в диапазоне"
+      #  exit 1
+      #fi
+      #echo "$VMID"      
       echo "$HOST | $ZONE"
 
       EXTRA=""
@@ -132,12 +131,12 @@ plan:
       node_name    = "pve03"
       pool_id      = "NONAME"
       
-      vm_id_range    = [302, 349]
+      #vm_id_range    = [302, 349]
       template_vm_id = ${TEMPLATE_ID}
       stand_os = "${STAND_OS}"
       vms = {
         "${HOST}" = {
-          vm_id = ${VMID}
+          #vm_id = ${VMID}
           ${EXTRA}
         }
       }
@@ -171,4 +170,17 @@ apply:
     - tofu apply -input=false tfplan
   rules:
     - if: '$STAND_FQDN && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
+      when: manual
+
+destroy:
+  stage: destroy
+  needs: []
+  script:
+    - |
+      HOST="${STAND_FQDN%%.*}"
+    - *tf_backend
+    - tofu init
+    - tofu destroy -auto-approve
+  rules:
+    - if: '$STAND_FQND && $STAND_ACTION == "destroy" && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: manual
