@@ -180,5 +180,5 @@ destroy:
     - tofu init
     - tofu destroy -auto-approve
   rules:
-    - if: '$STAND_FQND && $STAND_ACTION == "destroy" && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
+    - if: '$STAND_FQDN && $STAND_ACTION == "destroy" && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: manual
