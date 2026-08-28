@@ -172,7 +172,7 @@ apply:
 
 destroy:
   stage: destroy
-  needs: []
+  needs: [plan]
   script:
     - |
       HOST="${STAND_FQDN%%.*}"
