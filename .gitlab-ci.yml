@@ -67,7 +67,7 @@ plan:
 
       case "$STAND_OS" in 
         redos)
-          TEMPlATE_ID=351
+          TEMPLATE_ID=351
         ;;
         astra)
           TEMPLATE_ID=142
@@ -131,12 +131,10 @@ plan:
       node_name    = "pve03"
       pool_id      = "NONAME"
       
-      #vm_id_range    = [302, 349]
       template_vm_id = ${TEMPLATE_ID}
       stand_os = "${STAND_OS}"
       vms = {
         "${HOST}" = {
-          #vm_id = ${VMID}
           ${EXTRA}
         }
       }
