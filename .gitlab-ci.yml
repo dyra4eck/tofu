@@ -219,7 +219,7 @@ archive:
     - |
       HOST="${STAND_FQDN%%.*}"
       [ -n "$HOST" ] || { echo "STAND_FQDN не задан"; exit 1; }
-    - *tf.backend
+    - *tf_backend
     - tofu init
     - *from_state
     - |
