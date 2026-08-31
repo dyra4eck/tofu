@@ -17,6 +17,26 @@ default:
   [ -n "$STAND_PASSWORD_HASH_B64" ] && export TF_VAR_password_hash="$(printf '%s' "$STAND_PASSWORD_HASH_B64" | tr -d '[:space:]' | base64 -d)"
   [ -n "$STAND_NODE_NAME" ] && export TF_VAR_node_name="$STAND_NODE_NAME"
 
+.from_state:  &from_state |
+  tofu show -json > cur.json
+  Q='.values.root_module.resources[] | select(.type=="proxmox_virtual_environment_vm")
+  NODE=$(jq -r "$Q | .values.node_name" cur.json)
+  CORES=$(jq -r "$Q | .values.cpu[0].cores" cur.json)
+  SOCK=$(jq -r "$Q | .values.cpu[0].sockets" cur.json)
+  MEM=$(jq -r "$Q | .values.memory[0].dedicated" cur.json)
+  DISK=$(jq -r "$Q | .values.disk[0].size" cur.json)
+  POOL=$(jq -r "$Q | .values.pool_id" cur.json)
+  VLAN=$(jq -r "$Q | .values.network_device[0].vlan_id" cur.json)
+  VD=$(jq -r "$Q | .values.initialization[0].vendor_data_file_id" cur.json)
+
+  for v in NODE CORES MEM DISK; do
+    eval "val=\$$v"
+    [ -n "$val" ] && [ "$val" != "null" ] || { echo "$v не нашелся в state"; exit 1; }
+  done
+
+  case "$VD" in *astra*) OS=astra ;; *) OS=redos ;; esac
+  export TF_VAR_node_name="$NODE"
+
 stages:
   - validate
   - plan
@@ -31,6 +51,7 @@ validate:
     - tofu validate
 
 plan:
+  resource_group: $STAND_FQDN
   stage: plan
   script:
     - |
@@ -143,6 +164,7 @@ plan:
     - when: never
 
 apply:
+  resource_group: $STAND_FQDN
   stage: apply
   needs: [plan]
   script:
@@ -152,10 +174,11 @@ apply:
     - tofu init
     - tofu apply -input=false tfplan
   rules:
-    - if: '$STAND_FQDN && $STAND_ACTION != "destroy" && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
+    - if: '$STAND_FQDN && !$STAND_ACTION && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: manual
 
 destroy:plan:
+  resource_group: $STAND_FQDN
   stage: destroy
   rules:
     - if: '$STAND_ACTION == "destroy"'
@@ -170,6 +193,7 @@ destroy:plan:
     paths: [tfplan-destroy]
 
 destroy:apply:
+  resource_group: $STAND_FQDN
   stage: destroy
   needs: [destroy:plan]
   rules:
@@ -184,3 +208,42 @@ destroy:apply:
     - tofu init
     - tofu apply -auto-approve tfplan-destroy
 
+archive:
+  stage: lifecycle
+  resource_group: $STAND_FQDN
+  rules:
+    - if: '$STAND_ACTION == "archive"'
+      when: manual
+  script:
+    - apk add --no-cache jq
+    - |
+      HOST="${STAND_FQDN%%.*}"
+      [ -n "$HOST" ] || { echo "STAND_FQDN не задан"; exit 1; }
+    - *tf.backend
+    - tofu init
+    - *from_state
+    - |
+      cat > pipeline.auto.tfvars <<EOF
+      stand_os = "${OS}"
+      vms = {
+        "${HOST}" = {
+          pool_id = "${POOL}"
+          cores = ${CORES}
+          sockets = ${SOCK}
+          memory = ${MEM}
+          disk = ${DISK}
+          vlan_id = ${VLAN}
+          started = false
+          on_boot = false
+          protection = true
+          tags = ["archived"]
+        }
+      }
+      EOF
+      cat pipeline.auto.tfvars
+    - tofu plan -out=tfplan
+    - |
+      tofu show -json tfplan \
+        | jq -e '[.resource_changes[].change.actions[]] | index("delete") | not' >/dev/null \
+        || { echo "в plan содержится удаление - такого нам не надо"; exit 1; }
+    - tofu apply -auto-approve tfplan
