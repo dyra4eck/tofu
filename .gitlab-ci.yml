@@ -42,6 +42,7 @@ stages:
   - plan
   - apply
   - destroy
+  - archive
 
 validate:
   stage: validate 
@@ -209,7 +210,7 @@ destroy:apply:
     - tofu apply -auto-approve tfplan-destroy
 
 archive:
-  stage: lifecycle
+  stage: archive
   resource_group: $STAND_FQDN
   rules:
     - if: '$STAND_ACTION == "archive"'
