@@ -14,7 +14,7 @@ default:
   export TF_HTTP_UNLOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
   export TF_HTTP_LOCK_METHOD=POST
   export TF_HTTP_UNLOCK_METHOD=DELETE
-  [ -n "$STAND_PASSWORD_HASH_B64" ] && export TF_VAR_password_hash="$(printf '%s' "$STAND_PASSWORD_HASH_B64" | base64 -d | tr -d '\n')"
+  [ -n "$STAND_PASSWORD_HASH_B64" ] && export TF_VAR_password_hash="$(printf '%s' "$STAND_PASSWORD_HASH_B64" | tr -d '[:space:]' | base64 -d)"
   [ -n "$STAND_NODE_NAME" ] && export TF_VAR_node_name="$STAND_NODE_NAME"
 
 stages:
@@ -113,8 +113,8 @@ plan:
       [ -n "${STAND_STARTED}" ] && add "started = \"${STAND_STARTED}\""
       [ -n "${STAND_PROTECTION}" ] && add "protection = \"${STAND_PROTECTION}\""
       [ -n "${STAND_BACKUP}" ] && add "backup = \"${STAND_BACKUP}\""
-      [ -n "${STAND_TAGS}" ] && add "tags = [\"$(echo "STAND_TAGS" | sed 's/,/", "/g')\"]"
-      [ -n "${STAND_DESCRIPTION}" ] && add "description = ${STAND_DESCRIPTION}"
+      [ -n "${STAND_TAGS}" ] && add "tags = [\"$(echo "$STAND_TAGS" | sed 's/,/", "/g')\"]"
+      [ -n "${STAND_DESCRIPTION}" ] && add "description = \"${STAND_DESCRIPTION}\""
       cat  > pipeline.auto.tfvars <<EOF
       pve_endpoint = "https://10.205.251.3:8006/"
       pool_id      = "NONAME"

@@ -176,7 +176,7 @@ variable "vms" {
 
 variable "default_tags" {
   type    = list(string)
-  default = ["tff"]
+  default = ["tf"]
 }
 
 variable "ssh_key_files" {
