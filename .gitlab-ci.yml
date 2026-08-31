@@ -14,9 +14,8 @@ default:
   export TF_HTTP_UNLOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
   export TF_HTTP_LOCK_METHOD=POST
   export TF_HTTP_UNLOCK_METHOD=DELETE
-  export TF_VAR_password_hash="$(printf '%s' "$STAND_PASSWORD_HASH_B64" | base64 -d | tr -d '\n')"
-  [ -n "$STAND_NODE_NAME" ] || { echo "STAND_NODE_NAME не задан"; exit 1; }
-  export TF_VAR_node_name="$STAND_NODE_NAME"
+  [ -n "$STAND_PASSWORD_HASH_B64" ] && export TF_VAR_password_hash="$(printf '%s' "$STAND_PASSWORD_HASH_B64" | base64 -d | tr -d '\n')"
+  [ -n "$STAND_NODE_NAME" ] && export TF_VAR_node_name="$STAND_NODE_NAME"
 
 stages:
   - validate
@@ -42,6 +41,7 @@ plan:
 
       HOST="${STAND_FQDN%%.*}"
       ZONE="${STAND_FQDN#*.}"
+      [ -n "$HOST" ] || { echo "STAND_FQDN не задан"; exit 1; }
       if [ "$HOST" = "$ZONE" ]; then
         echo "STAND_FQDN должен быть FQDN: $STAND_FQDN"
         exit 1
@@ -98,36 +98,23 @@ plan:
       echo "$HOST | $ZONE"
 
       EXTRA=""
-      [ -n "${STAND_NODE_NAME}" ] && EXTRA="${EXTRA} node_name = \"${STAND_NODE_NAME}\"
-      "
-      [ -n "${STAND_POOL_ID}" ] && EXTRA="${EXTRA} pool_id = \"${STAND_POOL_ID}\"
-      "
-      [ -n "${STAND_IP}" ] && EXTRA="${EXTRA} ip = \"${STAND_IP}\"
-      "
-      [ -n "${STAND_GATEWAY}" ] && EXTRA="${EXTRA} gateway = \"${STAND_GATEWAY}\"
-      "
-      [ -n "${STAND_VLAN_ID}" ] && EXTRA="${EXTRA} vlan_id = ${STAND_VLAN_ID}
-      "
-      [ -n "${STAND_MAC_ADDRESS}" ] && EXTRA="${EXTRA} mac_address = \"${STAND_MAC_ADDRESS}\"
-      "
-      [ -n "${STAND_CORES}" ] && EXTRA="${EXTRA} cores = ${STAND_CORES}
-      "
-      [ -n "${STAND_MEMORY}" ] && EXTRA="${EXTRA} memory = $(( STAND_MEMORY * 1024 ))
-      "
-      [ -n "${STAND_DISK}" ] && EXTRA="${EXTRA} disk = ${STAND_DISK}
-      "
-      [ -n "${STAND_ON_BOOT}" ] && EXTRA="${EXTRA} on_boot = ${STAND_ON_BOOT}
-      "
-      [ -n "${STAND_STARTED}" ] && EXTRA="${EXTRA} started = ${STAND_STARTED}
-      "
-      [ -n "${STAND_PROTECTION}" ] && EXTRA="${EXTRA} protection = ${STAND_PROTECTION}
-      "
-      [ -n "${STAND_BACKUP}" ] && EXTRA="${EXTRA} backup = ${STAND_BACKUP}
-      "
-      [ -n "${STAND_TAGS}" ] && EXTRA="${EXTRA} tags = ${STAND_TAGS}
-      "
-      [ -n "${STAND_DESCRIPTION}" ] && EXTRA="${EXTRA} description = \"${STAND_DESCRIPTION}\""
-      
+      add() { EXTRA="${EXTRA} 
+          $1"; }
+
+      [ -n "${STAND_POOL_ID}" ] && add "pool_id = \"${STAND_POOL_ID}\""
+      [ -n "${STAND_IP}" ] && add "ip = \"${STAND_IP}\""
+      [ -n "${STAND_GATEWAY}" ] && add "gateway = \"${STAND_GATEWAY}\""
+      [ -n "${STAND_VLAN_ID}" ] && add "vlan_id = ${STAND_VLAN_ID}"
+      [ -n "${STAND_MAC_ADDRESS}" ] && add "mac_address = \"${STAND_MAC_ADDRESS}\""
+      [ -n "${STAND_CORES}" ] && add "cores = ${STAND_CORES}"
+      [ -n "${STAND_MEMORY}" ] && add "memory = $(( STAND_MEMORY * 1024 ))"
+      [ -n "${STAND_DISK}" ] && add "disk = ${STAND_DISK}"
+      [ -n "${STAND_ON_BOOT}" ] && add "on_boot = ${STAND_ON_BOOT}"
+      [ -n "${STAND_STARTED}" ] && add "started = \"${STAND_STARTED}\""
+      [ -n "${STAND_PROTECTION}" ] && add "protection = \"${STAND_PROTECTION}\""
+      [ -n "${STAND_BACKUP}" ] && add "backup = \"${STAND_BACKUP}\""
+      [ -n "${STAND_TAGS}" ] && add "tags = [\"$(echo "STAND_TAGS" | sed 's/,/", "/g')\"]"
+      [ -n "${STAND_DESCRIPTION}" ] && add "description = ${STAND_DESCRIPTION}"
       cat  > pipeline.auto.tfvars <<EOF
       pve_endpoint = "https://10.205.251.3:8006/"
       pool_id      = "NONAME"
@@ -171,15 +158,32 @@ apply:
     - if: '$STAND_FQDN && $STAND_ACTION != "destroy" && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: manual
 
-destroy:
+destroy:plan:
   stage: destroy
-  needs: [plan]
+  rules:
+    - if: '$STAND_ACTION == "destroy"'
   script:
     - |
       HOST="${STAND_FQDN%%.*}"
+      [ -n "$HOST" ] || { echo "HOST пустой"; exit 1; }
     - *tf_backend
     - tofu init
-    - tofu destroy -auto-approve
+    - tofu plan -destroy -out=tfplan-destroy
+  artifacts:
+    paths: [tfplan-destroy]
+
+destroy:apply:
+  stage: destroy
+  needs: [destroy:plan]
   rules:
-    - if: '$STAND_FQDN && $STAND_ACTION == "destroy" && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
+    - if: '$STAND_ACTION == "destroy"'
       when: manual
+      allow_failure: false
+  script:
+    - |
+      HOST="${STAND_FQDN%%.*}"
+      [ -n "$HOST" ] || { echo "HOST пустой"; exit 1; }
+    - *tf_backend
+    - tofu init
+    - tofu apply -auto-approve tfplan-destroy
+

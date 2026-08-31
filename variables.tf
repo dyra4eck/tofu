@@ -2,6 +2,7 @@
 
 variable "pve_endpoint" {
   type        = string
+  default     = "https://10.205.231.3:8006/"
   description = "url api proxmox"
 }
 
@@ -31,6 +32,7 @@ variable "node_name" {
 
 variable "pool_id" {
   type        = string
+  default     = "NONAME"
   description = "пул вмок"
 }
 
@@ -48,6 +50,7 @@ variable "pool_id" {
 
 variable "template_vm_id" {
   type        = number
+  default     = 351
   description = "vmid cloud-init шаблона"
 }
 
@@ -61,6 +64,10 @@ variable "stand_os" {
   type        = string
   default     = "redos"
   description = "astra | redos"
+  validation {
+    condition     = contains(["redos", "astra"], var.stand_os)
+    error_message = "stand_os: доступны тольок redos и astra"
+  }
 }
 
 ### user
@@ -162,12 +169,14 @@ variable "vms" {
     tags        = optional(list(string), []) # доавбление к default_tags
     description = optional(string)           # null -> дефолтный текст
   }))
+
+  default = {}
   # validation потом добавлю
 }
 
 variable "default_tags" {
   type    = list(string)
-  default = ["tf"]
+  default = ["tff"]
 }
 
 variable "ssh_key_files" {
