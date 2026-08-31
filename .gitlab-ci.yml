@@ -15,6 +15,8 @@ default:
   export TF_HTTP_LOCK_METHOD=POST
   export TF_HTTP_UNLOCK_METHOD=DELETE
   export TF_VAR_password_hash="$(printf '%s' "$STAND_PASSWORD_HASH_B64" | base64 -d | tr -d '\n')"
+  [ -n "$STAND_NODE_NAME" ] || { echo "STAND_NODE_NAME не задан"; exit 1; }
+  export TF_VAR_node_name="$STAND_NODE_NAME"
 
 stages:
   - validate
@@ -128,7 +130,6 @@ plan:
       
       cat  > pipeline.auto.tfvars <<EOF
       pve_endpoint = "https://10.205.251.3:8006/"
-      node_name    = "pve03"
       pool_id      = "NONAME"
       
       template_vm_id = ${TEMPLATE_ID}

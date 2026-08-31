@@ -14,11 +14,16 @@ variable "pve_token" {
 variable "pve_insecure" {
   type        = bool
   default     = true
-  description = "хз хуйня какая-то"
+  description = "игнорирование ошибки проверки TLS-сертификата при подключении к ProxmoxVE"
 }
 
 variable "node_name" {
-  type        = string
+  type    = string
+  default = "pve03"
+  validation {
+    condition     = contains(["pve", "pve03"], var.node_name)
+    error_message = "node_name: доступны только pve и pve03"
+  }
   description = "Имя ноды"
 }
 
