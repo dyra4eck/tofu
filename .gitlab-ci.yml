@@ -69,16 +69,13 @@ plan:
 
       case "$STAND_OS" in 
         redos)
-          TEMPLATE_ID=351
-        ;;
+          TEMPLATE_ID="${REDOS_TEMPLATE_ID}" ;;
         astra)
-          TEMPLATE_ID=142
-        ;;
+          TEMPLATE_ID="${ASTRA_TEMPLATE_ID}" ;;
         *)
-        echo "STAND_OS задан неверно: $STAND_OS. Варианты: astra | redos"
-        exit 1
-        ;;
+        echo "STAND_OS задан неверно: $STAND_OS. Варианты: astra | redos"; exit 1 ;;
       esac
+      [ -n "$TEMPLATE_ID" ] || { echo "TEMPLATE_ID не определен (STAND_OS=$STAND_OS)"; exit 1; }
 
       #PVE_API="https://10.205.251.3:8006/api2/json"
       #VMID=""
