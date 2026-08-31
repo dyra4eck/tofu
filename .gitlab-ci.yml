@@ -15,11 +15,11 @@ default:
   export TF_HTTP_LOCK_METHOD=POST
   export TF_HTTP_UNLOCK_METHOD=DELETE
   [ -n "$STAND_PASSWORD_HASH_B64" ] && export TF_VAR_password_hash="$(printf '%s' "$STAND_PASSWORD_HASH_B64" | tr -d '[:space:]' | base64 -d)"
-  [ -n "$STAND_NODE_NAME" ] && export TF_VAR_node_name="$STAND_NODE_NAME"
+  [ -n "$STAND_NODE_NAME" ] && export TF_VAR_node_name="$STAND_NODE_NAME" || true
 
 .from_state:  &from_state |
   tofu show -json > cur.json
-  Q='.values.root_module.resources[] | select(.type=="proxmox_virtual_environment_vm")
+  Q='.values.root_module.resources[] | select(.type=="proxmox_virtual_environment_vm")'
   NODE=$(jq -r "$Q | .values.node_name" cur.json)
   CORES=$(jq -r "$Q | .values.cpu[0].cores" cur.json)
   SOCK=$(jq -r "$Q | .values.cpu[0].sockets" cur.json)
@@ -160,7 +160,7 @@ plan:
       - pipeline.auto.tfvars
       - tfplan
   rules:
-    - if: '$STAND_FQDN && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
+    - if: '$STAND_FQDN && !$STAND_ACTION && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger")'
       when: on_success
     - when: never
 
