@@ -2,7 +2,7 @@
 
 variable "pve_endpoint" {
   type        = string
-  default     = "https://10.205.231.3:8006/"
+  default     = "https://10.205.251.3:8006/"
   description = "url api proxmox"
 }
 
