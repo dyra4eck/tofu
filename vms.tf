@@ -11,7 +11,6 @@ resource "proxmox_virtual_environment_vm" "this" {
   pool_id             = coalesce(each.value.pool_id, var.pool_id)
   description         = coalesce(each.value.description, "руками не трогать 0_o")
   tags                = sort(distinct(concat(var.default_tags, each.value.tags)))
-  hook_script_file_id = each.value.hook_script_file_id
 
   machine       = "q35"
   scsi_hardware = "virtio-scsi-single"

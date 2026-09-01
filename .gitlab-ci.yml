@@ -39,8 +39,8 @@ default:
 
 .archive_profille: &archive_profile |
   case "$STAND_ACTION" in
-    archive) ST=false; OB=false; PR=true; TG='["archived"]'; HS='"local:snippets/block-start.sh"' ;;
-    unarchive)  ST=true; OB=false; PR=false; TG='[]'; HS=null ;;
+    archive) ST=false; OB=false; PR=true; TG='["archived"]' ;;
+    unarchive)  ST=true; OB=false; PR=false; TG='[]' ;;
     *) echo "STAND_ACTION=$STAND_ACTION - не верно задано"; exit 1 ;;
   esac
 
@@ -246,7 +246,6 @@ archive:plan:
           on_boot = ${OB}
           protection = ${PR}
           tags = ${TG}
-          hook_script_file_id = ${HS}
         }
       }
       EOF
