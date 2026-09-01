@@ -8,9 +8,9 @@ resource "proxmox_virtual_environment_vm" "this" {
   name      = each.key
   node_name = coalesce(each.value.node_name, var.node_name)
   #  vm_id       = each.value.vm_id
-  pool_id             = coalesce(each.value.pool_id, var.pool_id)
-  description         = coalesce(each.value.description, "руками не трогать 0_o")
-  tags                = sort(distinct(concat(var.default_tags, each.value.tags)))
+  pool_id     = coalesce(each.value.pool_id, var.pool_id)
+  description = coalesce(each.value.description, "руками не трогать 0_o")
+  tags        = sort(distinct(concat(var.default_tags, each.value.tags)))
 
   machine       = "q35"
   scsi_hardware = "virtio-scsi-single"
