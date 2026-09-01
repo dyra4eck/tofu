@@ -37,6 +37,14 @@ default:
   case "$VD" in *astra*) OS=astra ;; *) OS=redos ;; esac
   export TF_VAR_node_name="$NODE"
 
+.archive_profille: &archive_profile |
+  case "$STAND_ACTION" in
+    archive) ST=false; OB=false; PR=true; TG='["archived"]' ;;
+    unarchive)  ST=true; OB=false; PR=false; TG='[]'] ;;
+    *) echo "STAND_ACTION=$STAND_ACTION - не верно задано"; exit 1 ;;
+  esac
+
+
 stages:
   - validate
   - plan
@@ -209,12 +217,11 @@ destroy:apply:
     - tofu init
     - tofu apply -auto-approve tfplan-destroy
 
-archive:
+archive:plan:
   stage: archive
   resource_group: $STAND_FQDN
   rules:
-    - if: '$STAND_ACTION == "archive"'
-      when: manual
+    - if: '$STAND_ACTION == "archive" || $STAND_ACTION == "unarchive"'
   script:
     - apk add --no-cache jq
     - |
@@ -223,6 +230,7 @@ archive:
     - *tf_backend
     - tofu init
     - *from_state
+    - *archive_profile
     - |
       cat > pipeline.auto.tfvars <<EOF
       stand_os = "${OS}"
@@ -234,58 +242,36 @@ archive:
           memory = ${MEM}
           disk = ${DISK}
           vlan_id = ${VLAN}
-          started = false
-          on_boot = false
-          protection = true
-          tags = ["archived"]
+          started = ${ST}
+          on_boot = ${OB}
+          protection = ${PR}
+          tags = ${TG}
         }
       }
       EOF
       cat pipeline.auto.tfvars
-    - tofu plan -out=tfplan
+    - tofu plan -out=tfplan-archive
+    - tofu show tfplan-archive
     - |
-      tofu show -json tfplan \
+      tofu show -json tfplan-archive \
         | jq -e '[.resource_changes[].change.actions[]] | index("delete") | not' >/dev/null \
         || { echo "в plan содержится удаление - такого нам не надо"; exit 1; }
-    - tofu apply -auto-approve tfplan
+  artifacts:
+    paths: [tfplan-archive, pipeline.auto.tfvars]
 
-unarchive:
+archive:apply:
   stage: archive
   resource_group: $STAND_FQDN
+  needs: [archive:plan]
   rules:
-    - if: '$STAND_ACTION == "unarchive"'
+    - if: '$STAND_ACTION == "unarchive" || $STAND_ACTION == "archive"'
       when: manual
+      allow_failure: false
   script:
-    - apk add --no-cache jq
     - |
       HOST="${STAND_FQDN%%.*}"
       [ -n "$HOST" ] || { echo "STAND_FQDN не задан"; exit 1; }
     - *tf_backend
     - tofu init
-    - *from_state
-    - |
-      cat > pipeline.auto.tfvars <<EOF
-      stand_os = "${OS}"
-      vms = {
-        "${HOST}" = {
-          pool_id = "${POOL}"
-          cores = ${CORES}
-          sockets = ${SOCK}
-          memory = ${MEM}
-          disk = ${DISK}
-          vlan_id = ${VLAN}
-          started = true
-          on_boot = false
-          protection = false
-          tags = []
-        }
-      }
-      EOF
-      cat pipeline.auto.tfvars
-    - tofu plan -out=tfplan
-    - |
-      tofu show -json tfplan \
-        | jq -e '[.resource_changes[].change.actions[]] | index("delete") | not' >/dev/null \
-        || { echo "в plan содержится удаление - такого нам не надо"; exit 1; }
-    - tofu apply -auto-approve tfplan
+    - tofu apply -auto-approve tfplan-archive
 
