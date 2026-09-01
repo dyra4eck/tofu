@@ -168,6 +168,8 @@ variable "vms" {
     # --- tags -----------------------------------------
     tags        = optional(list(string), []) # доавбление к default_tags
     description = optional(string)           # null -> дефолтный текст
+
+    hook_script_file_id = optional(string)
   }))
 
   default = {}
