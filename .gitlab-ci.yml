@@ -40,7 +40,7 @@ default:
 .archive_profille: &archive_profile |
   case "$STAND_ACTION" in
     archive) ST=false; OB=false; PR=true; TG='["archived"]' ;;
-    unarchive)  ST=true; OB=false; PR=false; TG='[]'] ;;
+    unarchive)  ST=true; OB=false; PR=false; TG='[]' ;;
     *) echo "STAND_ACTION=$STAND_ACTION - не верно задано"; exit 1 ;;
   esac
 
