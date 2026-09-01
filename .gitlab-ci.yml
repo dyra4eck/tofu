@@ -248,3 +248,44 @@ archive:
         | jq -e '[.resource_changes[].change.actions[]] | index("delete") | not' >/dev/null \
         || { echo "в plan содержится удаление - такого нам не надо"; exit 1; }
     - tofu apply -auto-approve tfplan
+
+unarchive:
+  stage: archive
+  resource_group: $STAND_FQDN
+  rules:
+    - if: '$STAND_ACTION == "unarchive"'
+      when: manual
+  script:
+    - apk add --no-cache jq
+    - |
+      HOST="${STAND_FQDN%%.*}"
+      [ -n "$HOST" ] || { echo "STAND_FQDN не задан"; exit 1; }
+    - *tf_backend
+    - tofu init
+    - *from_state
+    - |
+      cat > pipeline.auto.tfvars <<EOF
+      stand_os = "${OS}"
+      vms = {
+        "${HOST}" = {
+          pool_id = "${POOL}"
+          cores = ${CORES}
+          sockets = ${SOCK}
+          memory = ${MEM}
+          disk = ${DISK}
+          vlan_id = ${VLAN}
+          started = true
+          on_boot = false
+          protection = false
+          tags = []
+        }
+      }
+      EOF
+      cat pipeline.auto.tfvars
+    - tofu plan -out=tfplan
+    - |
+      tofu show -json tfplan \
+        | jq -e '[.resource_changes[].change.actions[]] | index("delete") | not' >/dev/null \
+        || { echo "в plan содержится удаление - такого нам не надо"; exit 1; }
+    - tofu apply -auto-approve tfplan
+
