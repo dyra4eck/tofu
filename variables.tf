@@ -163,7 +163,7 @@ variable "vms" {
     on_boot    = optional(bool)        # null -> var.on_boot работает 
     started    = optional(bool, true)  # false = не запускать после создания
     protection = optional(bool, false) # true = запрет на удаление в pve
-    backup     = optional(bool, false)
+    backup     = optional(bool, true)
 
     # --- tags -----------------------------------------
     tags        = optional(list(string), []) # доавбление к default_tags
