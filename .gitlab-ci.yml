@@ -37,14 +37,6 @@ default:
   case "$VD" in *astra*) OS=astra ;; *) OS=redos ;; esac
   export TF_VAR_node_name="$NODE"
 
-.archive_profille: &archive_profile |
-  case "$STAND_ACTION" in
-    archive) ST=false; OB=false; PR=true; TG='["archived"]' ;;
-    unarchive)  ST=true; OB=false; PR=false; TG='[]' ;;
-    *) echo "STAND_ACTION=$STAND_ACTION - не верно задано"; exit 1 ;;
-  esac
-
-
 stages:
   - validate
   - plan
@@ -221,57 +213,70 @@ archive:plan:
   stage: archive
   resource_group: $STAND_FQDN
   rules:
-    - if: '$STAND_ACTION == "archive" || $STAND_ACTION == "unarchive"'
+    - if: '$STAND_ACTION == "archive"'
   script:
-    - apk add --no-cache jq
     - |
       HOST="${STAND_FQDN%%.*}"
       [ -n "$HOST" ] || { echo "STAND_FQDN не задан"; exit 1; }
     - *tf_backend
     - tofu init
-    - *from_state
-    - *archive_profile
-    - |
-      cat > pipeline.auto.tfvars <<EOF
-      stand_os = "${OS}"
-      vms = {
-        "${HOST}" = {
-          pool_id = "${POOL}"
-          cores = ${CORES}
-          sockets = ${SOCK}
-          memory = ${MEM}
-          disk = ${DISK}
-          vlan_id = ${VLAN}
-          started = ${ST}
-          on_boot = ${OB}
-          protection = ${PR}
-          tags = ${TG}
-        }
-      }
-      EOF
-      cat pipeline.auto.tfvars
-    - tofu plan -out=tfplan-archive
+    - tofu plan -destroy -out=tfplan-archive
     - tofu show tfplan-archive
-    - |
-      tofu show -json tfplan-archive \
-        | jq -e '[.resource_changes[].change.actions[]] | index("delete") | not' >/dev/null \
-        || { echo "в plan содержится удаление - такого нам не надо"; exit 1; }
   artifacts:
-    paths: [tfplan-archive, pipeline.auto.tfvars]
+    paths: [tfplan-archive]
 
 archive:apply:
   stage: archive
   resource_group: $STAND_FQDN
   needs: [archive:plan]
   rules:
-    - if: '$STAND_ACTION == "unarchive" || $STAND_ACTION == "archive"'
+    - if: '$STAND_ACTION == "archive"'
       when: manual
       allow_failure: false
+  variables:
+    PVE_API: "https://10.205.251.3:8006/api2/json"
+    BACKUP_STORAGE: "PBS"
   script:
+    - apk add --no-cache jq curl
     - |
       HOST="${STAND_FQDN%%.*}"
       [ -n "$HOST" ] || { echo "STAND_FQDN не задан"; exit 1; }
     - *tf_backend
     - tofu init
+    - |
+      tofu show -json > cur.json
+      Q='.values.root_module.resources[] | select(.type=="proxmox_virtual_environment_vm")'
+      VMID=$(jq -r "$Q | .values.vm_id" cur.json)
+      NODE=$(jq -r "$Q | .values.node_name" cur.json)
+      for v in VMID NODE; do
+        eval "val=\$$v"
+        [ -n "$val" ] && [ "$val" != "null" ] || { echo "$v нет в state"; exit 1; }
+      done
+      echo "архивация $HOST -> VMID=$VMID на $NODE"
+
+      AUTH="Authorization: PVEAPIToken=${PROXMOX_VE_API_TOKEN}"
+
+      UPID=$(curl -sk -H "$AUTH" -X POST \
+        "${PVE_API}/nodes/${NODE}/vzdump" \
+        -d "vmid=${VMID}" \
+        -d "storage=${BACKUP_STORAGE}" \
+        -d "mode=stop" \
+        -d "notes-template=archive ${HOST} pipeline=${CI_PIPELINE_ID} by=${GITLAB_USER_LOGIN}" \
+        | jq -r '.data')
+      [ -n "$UPID" ] && [ "$UPID" != "null" ] || { echo "vzdump не стартовал"; exit 1; }
+      echo "task: $UPID"
+
+      while :; do
+        ST=$(curl -sk -H "$AUTH" "${PVE_API}/nodes/${NODE}/tasks/${UPID}/status" | jq -r '.data')
+        [ "$(echo "$ST" | jq -r '.status')" = "stopped" ] && break
+        sleep 15
+      done
+      EXIT=$(echo "$ST" | jq -r '.exitstatus')
+      [ "$EXIT" = "OK" ] || { echo "backup FAILED: $EXIT"; exit 1; }
+
+      echo "******** бэкап успешен ***********"
+      curl -sk -H "$AUTH" \
+        "${PVE_API}/nodes/${NODE}/storage/${BACKUP_STORAGE}/content?content=backup&vmid=${VMID}" \
+        | jq -r '.data[].volid'
     - tofu apply -auto-approve tfplan-archive
 
