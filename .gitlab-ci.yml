@@ -261,7 +261,7 @@ archive:apply:
         -d "vmid=${VMID}" \
         -d "storage=${BACKUP_STORAGE}" \
         -d "mode=stop" \
-        -d "notes-template=archive ${HOST} pipeline=${CI_PIPELINE_ID} by=${GITLAB_USER_LOGIN}" \
+        -d "notes-template=${HOST} vmid={{vmid}} node={{node}}  pipeline=${CI_PIPELINE_ID} by=${GITLAB_USER_LOGIN}" \
         | jq -r '.data')
       [ -n "$UPID" ] && [ "$UPID" != "null" ] || { echo "vzdump не стартовал"; exit 1; }
       echo "task: $UPID"
