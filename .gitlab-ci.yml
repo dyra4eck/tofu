@@ -422,7 +422,6 @@ unarchive:apply:
 
       cat pipeline.auto.tfvars import.tf
     - tofu plan -out=tfplan-unarchive
-    - tofu show tfplan-unarchive
     - |
       tofu show -json tfplan-unarchive \
         | jq -e '[.resource_changes[].change.actions[]] | index("delete") | not' >/dev/null \
