@@ -246,6 +246,7 @@ archive:plan:
       [ -n "$HOST" ] || { echo "STAND_FQDN не задан"; exit 1; }
     - *tf_backend
     - tofu init
+    - tofu state list | grep -q proxmox_virtual_environment_vm || { echo "state пустой - нечего архивировать"; exit 1; }
     - tofu plan -destroy -out=tfplan-archive
     - tofu show tfplan-archive
   artifacts:
