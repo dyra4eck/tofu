@@ -287,7 +287,7 @@ archive:apply:
         -d "vmid=${VMID}" \
         -d "storage=${BACKUP_STORAGE}" \
         -d "mode=stop" \
-        -d "notes-template=${HOST} vmid={{vmid}} node={{node}}  pipeline=${CI_PIPELINE_ID} by=${GITLAB_USER_LOGIN}" \
+        -d "notes-template=${HOST}" \
         | jq -r '.data')
       [ -n "$UPID" ] && [ "$UPID" != "null" ] || { echo "vzdump не стартовал"; exit 1; }
       echo "task: $UPID"
@@ -375,7 +375,7 @@ unarchive:apply:
         || { echo "restore FAILED: $(echo "$ST" | jq -r '.exitstatus')"; exit 1; }
       echo "восстановлено: VMID=$NEWVMID"
     - |
-      CFG=$(curk -sk -H "$AUTH" "${PVE_API}/nodes/${NODE}/qemu/${NEWVMID}/config" | jq -r '.data')
+      CFG=$(curl -sk -H "$AUTH" "${PVE_API}/nodes/${NODE}/qemu/${NEWVMID}/config" | jq -r '.data')
       CORES=$(echo "$CFG" | jq -r '.cores')
       SOCK=$(echo "$CFG" | jq -r '.sockets // 1')
       MEM=$(echo "$CFG" | jq -r '.memory')
