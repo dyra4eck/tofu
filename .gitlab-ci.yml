@@ -427,7 +427,7 @@ unarchive:apply:
       tofu show -json tfplan-unarchive \
         | jq -e '[.resource_changes[].change.actions[]] | index("delete") | not' >/dev/null \
         || { echo "в plan содержится удаление - отказ"; exit 1; }
-    - tofu apply -auto-aprove tfplan-unarchive
+    - tofu apply -auto-approve tfplan-unarchive
   artifacts:
     paths: [pipeline.auto.tfvars, import.tf]
 
