@@ -37,6 +37,32 @@ default:
   case "$VD" in *astra*) OS=astra ;; *) OS=redos ;; esac
   export TF_VAR_node_name="$NODE"
 
+.find_backup: &find_backup |
+  NODE="${STAND_NODE_NAME:-pve03}"
+  AUTH="Authorization: PVEAPIToken=${PROXMOX_VE_API_TOKEN}"
+
+  BK=$(curl -sk -H "$AUTH" \
+    "${PVE_API}/nodes/${NODE}/storage/${BACKUP_STORAGE}/content?content=backup" \
+    | jq -r --arg h "$HOST" '
+        [ .data[]
+          | select(.notes != null)
+          | select(.notes | test("(^|\\s)" + $h + "(\\s|$)"))
+        ] | sort_by(.ctime) | last // empty')
+
+  [ -n "$BK" ] || { echo "бэкап для $HOST не найден в ${BACKUP_STORAGE}"; exit 1; }
+
+  VOLID=$(echo "$BK" | jq -r '.volid')
+  BSIZE=$(echo "$BK" | jq -r '.size')
+  BDATE=$(echo "$BK" | jq -r '.ctime | strftime("%Y-%m-%d %H:%M:%S")')
+  OLDVMID=$(echo "$VOLID" | sed -n 's|.*/vm/\([0-9]\+\)/.*|\1|p')
+
+  [ "$BSIZE" -gt 1073741824 ] || { echo "бэкап подозрительно мал ($BSIZE) - отказ"; exit 1; }
+
+  echo "найден: $VOLID"
+  echo "дата:   $BDATE"
+  echo "размер: $BSIZE байт"
+  echo "прежний VMID: $OLDVMID"
+
 stages:
   - validate
   - plan
@@ -280,3 +306,23 @@ archive:apply:
         | jq -r '.data[].volid'
     - tofu apply -auto-approve tfplan-archive
 
+unarchive:plan:
+  stage: archive
+  resource_group: $STAND_FQDN
+  rules:
+    - if: '$STAND_ACTION == "unarchive"'
+  variables:
+    PVE_API: "https://10.205.251.3:8006/api2/json"
+    BACKUP_STORAGE: "PBS"
+  script:
+    - apk add --no-cache jq curl
+    - |
+      HOST="${STAND_FQDN%%.*}"
+      [ -n "$HOST" ] || { echo "STAND_FQDN не задан"; exit 1; }
+    - *tf_backend
+    - tofu init
+    - |
+      if tofu state list | grep -q proxmox_virtual_environment_vm; then
+        echo "стенд $HOST уже в state - он не в архиве"; exit 1
+      fi
+    - *find_backup
