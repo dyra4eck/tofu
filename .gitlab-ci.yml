@@ -326,3 +326,107 @@ unarchive:plan:
         echo "стенд $HOST уже в state - он не в архиве"; exit 1
       fi
     - *find_backup
+
+unarchive:apply:
+  stage: archive
+  resource_group: $STAND_FQDN
+  needs: [unarchive:plan]
+  timeout: 1h
+  rules:
+    - if: '$STAND_ACTION == "unarchive"'
+      when: manual
+      allow_failure: false
+  variables:
+    PVE_API: "https://10.205.251.3:8006/api2/json"
+    BACKUP_STORAGE: "PBS"
+    RESTORE_STORAGE: "LVMStor"
+  script:
+    - apk add --no-cache jq curl
+    - |
+      HOST="${STAND_FQDN%%.*}"
+      [ -n "$HOST" ] || { echo "STAND_FQDN не задан"; exit 1; }
+    - *tf_backend
+    - tofu init
+    - *find_backup
+    - |
+      # попытка занять прежний VMID, иначе берется новый VMID
+      if curl -skf -H "$AUTH" "${PVE_API}/cluster/nextid?vmid=${OLDVMID}" >/dev/null 2>&1; then
+        NEWVMID="$OLDVMID"
+      else
+        NEWVMID=$(curl -sk -H "$AUTH" "${PVE_API}/cluster/nextid" | jq -r '.data')
+        echo "VMID $OLDVMID занят, берется новый $NEWVMID"
+      fi
+      [ -n "$NEWVMID" ] && [ "$NEWVMID" != "null" ] || { echo "не удалось получить VMID"; exit 1; }
+
+      UPID=$(curl -sk -H "$AUTH" -X POST "${PVE_API}/nodes/${NODE}/qemu" \
+        -d "vmid=${NEWVMID}" \
+        -d "archive=${VOLID}" \
+        -d "storage=${RESTORE_STORAGE}" \
+        | jq -r '.data')
+      [ -n "$UPID" ] && [ "$UPID" != "null" ] || { echo "restore не стартовал"; exit 1; }
+      echo "task: $UPID"
+
+       while :; do
+         ST=$(curl -sk -H "$AUTH" "${PVE_API}/nodes/${NODE}/tasks/${UPID}/status" | jq -r '.data')
+         [ "$(echo "$ST" | jq -r '.status')" = "stopped" ] && break
+         sleep 10
+      done
+      [ "$(echo "$ST" | jq -r '.exitstatus')" = "OK" ] \
+        || { echo "restore FAILED: $(echo "$ST" | jq -r '.exitstatus')"; exit 1; }
+      echo "восстановлено: VMID=$NEWVMID"
+    - |
+      CFG=$(curk -sk -H "$AUTH" "${PVE_API}/nodes/${NODE}/qemu/${NEWVMID}/config" | jq -r '.data')
+      CORES=$(echo "$CFG" | jq -r '.cores')
+      SOCK=$(echo "$CFG" | jq -r '.sockets // 1')
+      MEM=$(echo "$CFG" | jq -r '.memory')
+      SCSI0=$(echo "$CFG" | jq -r '.scsi0')
+      NET0=$(echo "$CFG" | jq -r '.net0')
+      VD=$(echo "$CFG" | jq -r '.cicustom // ""')
+
+      DISK=$(echo "$SCSI0"  | sed -n 's/.*size=\([0-9]\+\)G.*/\1/p')
+      MAC=$(echo "$NET0"    | sed -n 's/.*virtio=\([0-9A-Fa-f:]\+\).*/\1/p')
+      VLAN=$(echo "$NET0"   | sed -n 's/.*tag=\([0-9]\+\).*/\1/p')
+
+      case "$VD" in *astra*) OS=astra ;; *) OS=redos ;; esac
+
+      for v in CORES MEM DISK MAC VLAN; do
+        eval "val=\$$v"
+        [ -n "$val" ] || { echo "$v не разобран из конфига ВМ"; exit 1; }
+      done
+
+      cat > pipeline.auto.tfvars <<EOF
+      stand_os = "${OS}"
+      pool_id = "NONAME"
+      vms = {
+        "${HOST}" = {
+          cores = ${CORES}
+          sockets = ${SOCK}
+          memory = ${MEM}
+          disk = ${DISK}
+          vlan_id = ${VLAN}
+          mac_address = "${MAC}"
+          on_boot = false
+          started = true
+          backup = true
+        }
+      }
+      EOF
+
+      cat > import.tf <<EOF
+      import {
+        to = proxmox_virtual_environment_vm.this["${HOST}"]
+        id = "${NODE}/${NEWVMID}"
+      }
+      EOF
+
+      cat pipeline.auto.tfvars import.tf
+    - tofu plan -out=tfplan-unarchive
+    - tofu show tfplan-unarchive
+    - |
+      tofu show -json tfplan-unarchive \
+        | jq -e '[.resource_changes[].change.actions[]] | index("delete") | not' >/dev/null \
+        || { echo "в plan содержится удаление - отказ"; exit 1; }
+    - tofu apply -auto-aprove tfplan-unarchive
+  artifacts:
+    paths: [pipeline.auto.tfvars, import.tf]
+
