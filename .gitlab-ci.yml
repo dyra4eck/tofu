@@ -55,6 +55,7 @@ default:
   BSIZE=$(echo "$BK" | jq -r '.size')
   BDATE=$(echo "$BK" | jq -r '.ctime | strftime("%Y-%m-%d %H:%M:%S")')
   OLDVMID=$(echo "$VOLID" | sed -n 's|.*/vm/\([0-9]\+\)/.*|\1|p')
+  BACKUP_OS=$(echo "$BK" | jq -r '.notes // ""' | sed -n 's/.*stand_os=\(astra17\|astra\|redos\).*/\1/p')
 
   [ "$BSIZE" -gt 1073741824 ] || { echo "бэкап подозрительно мал ($BSIZE) - отказ"; exit 1; }
 
@@ -120,8 +121,10 @@ plan:
           TEMPLATE_ID="${REDOS_TEMPLATE_ID}" ;;
         astra)
           TEMPLATE_ID="${ASTRA_TEMPLATE_ID}" ;;
+        astra17)
+          TEMPLATE_ID="${ASTRA17_TEMPLATE_ID:-353}" ;;
         *)
-        echo "STAND_OS задан неверно: $STAND_OS. Варианты: astra | redos"; exit 1 ;;
+        echo "STAND_OS задан неверно: $STAND_OS. Варианты: astra17 | astra | redos"; exit 1 ;;
       esac
       [ -n "$TEMPLATE_ID" ] || { echo "TEMPLATE_ID не определен (STAND_OS=$STAND_OS)"; exit 1; }
 
@@ -275,10 +278,16 @@ archive:apply:
       Q='.values.root_module.resources[] | select(.type=="proxmox_virtual_environment_vm")'
       VMID=$(jq -r "$Q | .values.vm_id" cur.json)
       NODE=$(jq -r "$Q | .values.node_name" cur.json)
+      OS_TAG=$(jq -r "$Q | .values.tags[]? | select(startswith(\"os-\")) | sub(\"^os-\"; \"\")" cur.json | head -n1)
+      VD=$(jq -r "$Q | .values.initialization[0].vendor_data_file_id // \"\"" cur.json)
       for v in VMID NODE; do
         eval "val=\$$v"
         [ -n "$val" ] && [ "$val" != "null" ] || { echo "$v нет в state"; exit 1; }
       done
+      case "$OS_TAG" in
+        astra17|astra|redos) OS="$OS_TAG" ;;
+        *) case "$VD" in *astra*) OS=astra ;; *) OS=redos ;; esac ;;
+      esac
       echo "архивация $HOST -> VMID=$VMID на $NODE"
 
       AUTH="Authorization: PVEAPIToken=${PROXMOX_VE_API_TOKEN}"
@@ -288,7 +297,7 @@ archive:apply:
         -d "vmid=${VMID}" \
         -d "storage=${BACKUP_STORAGE}" \
         -d "mode=stop" \
-        -d "notes-template=${HOST}" \
+        -d "notes-template=${HOST} stand_os=${OS}" \
         | jq -r '.data')
       [ -n "$UPID" ] && [ "$UPID" != "null" ] || { echo "vzdump не стартовал"; exit 1; }
       echo "task: $UPID"
@@ -388,7 +397,18 @@ unarchive:apply:
       MAC=$(echo "$NET0"    | sed -n 's/.*virtio=\([0-9A-Fa-f:]\+\).*/\1/p')
       VLAN=$(echo "$NET0"   | sed -n 's/.*tag=\([0-9]\+\).*/\1/p')
 
-      case "$VD" in *astra*) OS=astra ;; *) OS=redos ;; esac
+      TAGS=$(echo "$CFG" | jq -r '.tags // ""')
+      OS_TAG=$(echo "$TAGS" | tr ';' '\n' | sed -n 's/^[[:space:]]*os-//p' | head -n1)
+      case "${BACKUP_OS:-$OS_TAG}" in
+        astra17|astra|redos) OS="${BACKUP_OS:-$OS_TAG}" ;;
+        *) case "$VD" in *astra*) OS=astra ;; *) OS=redos ;; esac ;;
+      esac
+
+      case "$OS" in
+        redos) TEMPLATE_ID="${REDOS_TEMPLATE_ID}" ;;
+        astra) TEMPLATE_ID="${ASTRA_TEMPLATE_ID}" ;;
+        astra17) TEMPLATE_ID="${ASTRA17_TEMPLATE_ID:-353}" ;;
+      esac
 
       for v in CORES MEM DISK MAC VLAN; do
         eval "val=\$$v"
@@ -397,6 +417,7 @@ unarchive:apply:
 
       cat > pipeline.auto.tfvars <<EOF
       stand_os = "${OS}"
+      template_vm_id = ${TEMPLATE_ID}
       pool_id = "NONAME"
       vms = {
         "${HOST}" = {

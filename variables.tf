@@ -63,10 +63,10 @@ variable "template_node_name" {
 variable "stand_os" {
   type        = string
   default     = "redos"
-  description = "astra | redos"
+  description = "astra17 | astra | redos"
   validation {
-    condition     = contains(["redos", "astra"], var.stand_os)
-    error_message = "stand_os: доступны тольок redos и astra"
+    condition     = contains(["redos", "astra", "astra17"], var.stand_os)
+    error_message = "stand_os: доступны redos, astra и astra17"
   }
 }
 
