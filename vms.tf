@@ -10,7 +10,7 @@ resource "proxmox_virtual_environment_vm" "this" {
   #  vm_id       = each.value.vm_id
   pool_id     = coalesce(each.value.pool_id, var.pool_id)
   description = coalesce(each.value.description, "руками не трогать 0_o")
-  tags        = sort(distinct(concat(var.default_tags, each.value.tags)))
+  tags        = sort(distinct(concat(var.default_tags, each.value.tags, ["os-${var.stand_os}"])))
 
   machine       = "q35"
   scsi_hardware = "virtio-scsi-single"
@@ -57,7 +57,7 @@ resource "proxmox_virtual_environment_vm" "this" {
 
   initialization {
     datastore_id        = var.datastore_disk
-    vendor_data_file_id = var.stand_os == "astra" ? "local:snippets/dns-register-astra.yaml" : "local:snippets/dns-register.yaml"
+    vendor_data_file_id = contains(["astra", "astra17"], var.stand_os) ? "local:snippets/dns-register-astra.yaml" : "local:snippets/dns-register.yaml"
 
     ip_config {
       ipv4 {
